@@ -1,0 +1,12 @@
+/node_modules
+/.next/
+/out/
+/build
+*.pem
+.env
+.env*.local
+npm-debug.log*
+.DS_Store
+*.tsbuildinfo
+next-env.d.ts.timestamp
+supabase/.temp/

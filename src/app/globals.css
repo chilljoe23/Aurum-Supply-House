@@ -1,0 +1,111 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/*
+  Aurum Supply House design tokens.
+  Palette: Warm Cream bg · Soft Ivory cards · Deep Navy brand · Charcoal text ·
+           Warm Gray secondary/borders · Muted Sage success · Soft Amber warning ·
+           Muted Terracotta error.  No bright colors, no gradients.
+*/
+
+@layer base {
+  :root {
+    --background: 43 33% 96%;          /* #F8F6F1 warm cream */
+    --foreground: 0 0% 17%;            /* #2B2B2B charcoal */
+
+    --card: 40 56% 98%;                /* #FFFCF8 soft ivory */
+    --card-foreground: 0 0% 17%;
+
+    --popover: 40 56% 98%;
+    --popover-foreground: 0 0% 17%;
+
+    --primary: 211 61% 17%;            /* #112B46 deep navy */
+    --primary-foreground: 40 56% 98%;
+
+    --secondary: 40 22% 92%;
+    --secondary-foreground: 211 61% 17%;
+
+    --muted: 40 22% 93%;
+    --muted-foreground: 50 5% 47%;     /* #7A7A74 warm gray */
+
+    --accent: 40 26% 90%;
+    --accent-foreground: 211 61% 17%;
+
+    --destructive: 10 39% 54%;         /* #B76A5B muted terracotta */
+    --destructive-foreground: 40 56% 98%;
+
+    --success: 100 14% 48%;            /* #758B6A muted sage */
+    --success-foreground: 40 56% 98%;
+
+    --warning: 40 51% 57%;             /* #C9A35A soft amber */
+    --warning-foreground: 211 61% 17%;
+
+    --border: 40 20% 88%;              /* #E7E3DB warm gray border */
+    --input: 40 20% 88%;
+    --ring: 211 61% 30%;
+
+    --radius: 0.625rem;
+  }
+
+  .dark {
+    --background: 211 38% 9%;
+    --foreground: 40 30% 92%;
+
+    --card: 211 34% 12%;
+    --card-foreground: 40 30% 92%;
+
+    --popover: 211 34% 12%;
+    --popover-foreground: 40 30% 92%;
+
+    --primary: 210 40% 74%;
+    --primary-foreground: 211 60% 12%;
+
+    --secondary: 211 26% 18%;
+    --secondary-foreground: 40 30% 92%;
+
+    --muted: 211 24% 17%;
+    --muted-foreground: 40 10% 66%;
+
+    --accent: 211 26% 20%;
+    --accent-foreground: 40 30% 92%;
+
+    --destructive: 10 44% 58%;
+    --destructive-foreground: 40 30% 95%;
+
+    --success: 100 20% 56%;
+    --success-foreground: 211 60% 12%;
+
+    --warning: 40 48% 62%;
+    --warning-foreground: 211 60% 12%;
+
+    --border: 211 22% 20%;
+    --input: 211 22% 22%;
+    --ring: 210 40% 60%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  html {
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1, "ss01" 1;
+  }
+  /* Restrained, warm scrollbars */
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-thumb {
+    @apply rounded-full bg-border;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-muted-foreground/40;
+  }
+}
