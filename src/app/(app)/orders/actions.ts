@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient as createServerClient } from "@/lib/supabase/server";
+import { callRpc } from "@/lib/supabase/rpc";
 import { getCurrentUser } from "@/lib/auth";
 import {
   orderDraftSchema,
@@ -38,7 +39,7 @@ export async function saveOrderDraft(raw: unknown): Promise<Result<{ id: string 
   }
   const d = parsed.data;
   const supabase = await createServerClient();
-  const { data, error } = await supabase.rpc("save_order_draft", {
+  const { data, error } = await callRpc(supabase, "save_order_draft", {
     p_invoice: d.invoice_id ?? null,
     p_client: d.client_id,
     p_selected_model: d.selected_model_id ?? null,
@@ -79,7 +80,7 @@ export async function resolveLinePrice(
 ): Promise<ResolvedPrice | { error: string }> {
   await requireStaff();
   const supabase = await createServerClient();
-  const { data, error } = await supabase.rpc("resolve_price", {
+  const { data, error } = await callRpc(supabase, "resolve_price", {
     p_client_id: clientId,
     p_product_id: productId,
     p_quantity: quantity,
@@ -103,7 +104,7 @@ export async function issueInvoice(raw: unknown): Promise<Result<{ invoice_numbe
   const parsed = issueSchema.safeParse(raw);
   if (!parsed.success) return { ok: false, error: "Validation failed", fieldErrors: parsed.error.flatten().fieldErrors };
   const supabase = await createServerClient();
-  const { data, error } = await supabase.rpc("issue_invoice", {
+  const { data, error } = await callRpc(supabase, "issue_invoice", {
     p_invoice: parsed.data.invoice_id,
     p_issue_date: parsed.data.issue_date ?? null,
     p_due_date: parsed.data.due_date ?? null,
@@ -121,7 +122,7 @@ export async function recordPayment(raw: unknown): Promise<Result> {
   if (!parsed.success) return { ok: false, error: "Validation failed", fieldErrors: parsed.error.flatten().fieldErrors };
   const p = parsed.data;
   const supabase = await createServerClient();
-  const { error } = await supabase.rpc("record_payment", {
+  const { error } = await callRpc(supabase, "record_payment", {
     p_invoice: p.invoice_id,
     p_amount: p.amount,
     p_method: p.method,
@@ -158,7 +159,7 @@ export async function addExpense(raw: unknown): Promise<Result> {
   if (!parsed.success) return { ok: false, error: "Validation failed", fieldErrors: parsed.error.flatten().fieldErrors };
   const e = parsed.data;
   const supabase = await createServerClient();
-  const { error } = await supabase.rpc("add_order_expense", {
+  const { error } = await callRpc(supabase, "add_order_expense", {
     p_invoice: e.invoice_id,
     p_type: e.type,
     p_amount: e.amount,

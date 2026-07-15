@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Plus } from "lucide-react";
+import { Plus, Wallet } from "lucide-react";
 import { PageHeader } from "@/components/patterns/page-header";
 import { Button } from "@/components/ui/button";
 import { OrdersManager } from "@/components/orders/orders-manager";
@@ -20,11 +20,18 @@ export default async function OrdersPage() {
         title="Orders"
         description="Build orders and issue branded invoices — with live profit, immutable snapshots, and customer payments."
         actions={
-          <Button asChild>
-            <Link href="/orders/new">
-              <Plus className="h-4 w-4" /> New order
-            </Link>
-          </Button>
+          <>
+            <Button variant="outline" asChild>
+              <Link href="/orders/receivables">
+                <Wallet className="h-4 w-4" /> Receivables
+              </Link>
+            </Button>
+            <Button asChild>
+              <Link href="/orders/new">
+                <Plus className="h-4 w-4" /> New order
+              </Link>
+            </Button>
+          </>
         }
       />
       <OrdersManager orders={orders} canSeeInternal={!!canSeeInternal} />

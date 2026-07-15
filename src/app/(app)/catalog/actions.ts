@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { callRpc } from "@/lib/supabase/rpc";
 import { getCurrentUser } from "@/lib/auth";
 import {
   productCreateSchema,
@@ -67,7 +68,7 @@ export async function createProduct(
   }
 
   if (p.true_cost !== null && p.true_cost !== undefined) {
-    const { error: costErr } = await supabase.rpc("record_product_cost", {
+    const { error: costErr } = await callRpc(supabase, "record_product_cost", {
       p_product: product.id,
       p_new_cost: p.true_cost,
       p_currency: p.currency,
@@ -130,7 +131,7 @@ export async function updateProduct(
     if (!p.cost_change_reason || p.cost_change_reason.trim() === "") {
       return { ok: false, error: "A reason is required to change the true cost." };
     }
-    const { error: costErr } = await supabase.rpc("record_product_cost", {
+    const { error: costErr } = await callRpc(supabase, "record_product_cost", {
       p_product: id,
       p_new_cost: p.true_cost,
       p_currency: p.currency,

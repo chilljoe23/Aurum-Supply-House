@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient as createServerClient } from "@/lib/supabase/server";
+import { callRpc } from "@/lib/supabase/rpc";
 import { getCurrentUser } from "@/lib/auth";
 import { assignmentSchema, overrideSchema } from "@/lib/pricing/schemas";
 import { clientCreateSchema, clientEditSchema, CLIENT_STATUSES } from "@/lib/clients/schemas";
@@ -181,7 +182,7 @@ export async function assignPricingModel(raw: unknown): Promise<Result> {
   if (!parsed.success) return { ok: false, error: "Validation failed", fieldErrors: parsed.error.flatten().fieldErrors };
   const a = parsed.data;
   const supabase = await createServerClient();
-  const { error } = await supabase.rpc("assign_pricing_model", {
+  const { error } = await callRpc(supabase, "assign_pricing_model", {
     p_client: a.client_id, p_sheet: a.pricing_sheet_id,
     p_effective: a.effective_date ?? null, p_expiration: a.expiration_date ?? null, p_notes: a.notes ?? null,
   });
@@ -196,7 +197,7 @@ export async function setClientOverride(raw: unknown): Promise<Result> {
   if (!parsed.success) return { ok: false, error: "Validation failed", fieldErrors: parsed.error.flatten().fieldErrors };
   const o = parsed.data;
   const supabase = await createServerClient();
-  const { error } = await supabase.rpc("set_client_override", {
+  const { error } = await callRpc(supabase, "set_client_override", {
     p_client: o.client_id, p_product: o.product_id, p_min_qty: o.min_quantity, p_max_qty: o.max_quantity ?? null,
     p_price: o.selling_price, p_currency: o.currency, p_effective: o.effective_date ?? null,
     p_expiration: o.expiration_date ?? null, p_active: o.active, p_reason: o.reason, p_notes: o.notes ?? null,

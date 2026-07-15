@@ -8,8 +8,10 @@ import { KpiCard } from "@/components/patterns/kpi-card";
 import { OrderStatusBadge } from "@/components/orders/status-badge";
 import { OrderActions } from "@/components/orders/order-actions";
 import { ExpenseManager } from "@/components/orders/expense-manager";
+import { CommissionPanel } from "@/components/commissions/commission-panel";
 import { getCurrentUser } from "@/lib/auth";
 import { getOrderDetail } from "@/lib/orders/queries";
+import { getInvoiceCommissions, getRecipientProfiles } from "@/lib/commissions/queries";
 import { addressLines } from "@/lib/orders/invoice-view-model";
 import { PAYMENT_METHOD_OPTIONS } from "@/lib/orders/schemas";
 import { formatCurrency } from "@/lib/utils";
@@ -33,6 +35,10 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
 
   const { header: h, items, payments, expenses, statusHistory, activity } = detail;
   const canManage = user?.role === "owner" || user?.role === "admin";
+  const [commissions, recipients] = await Promise.all([
+    getInvoiceCommissions(id),
+    canManage ? getRecipientProfiles() : Promise.resolve([]),
+  ]);
   const canSeeInternal = h.can_see_internal;
   const c = h.currency;
   const snap = (h.client_snapshot ?? {}) as Record<string, unknown>;
@@ -161,6 +167,20 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
 
           {/* Internal expenses (admin) */}
           {canManage && <ExpenseManager invoiceId={h.id} expenses={expenses} currency={c} />}
+
+          {/* Commissions (staff-only; reps see only their own) */}
+          <CommissionPanel
+            invoiceId={h.id}
+            invoiceStatus={h.status}
+            canManage={!!canManage}
+            currency={c}
+            subtotal={h.subtotal}
+            grossProfit={h.gross_profit}
+            totalCommission={h.total_commission}
+            netProfit={h.net_profit}
+            commissions={commissions}
+            recipients={recipients}
+          />
 
           {/* Payment history */}
           <Card>

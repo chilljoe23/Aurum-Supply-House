@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { callRpc } from "@/lib/supabase/rpc";
 import { getCurrentUser } from "@/lib/auth";
 import { pricingModelSchema, priceItemSchema, bulkAdjustSchema } from "@/lib/pricing/schemas";
 import { toCsv } from "@/lib/catalog/csv";
@@ -67,7 +68,7 @@ export async function setModelStatus(id: string, active: boolean): Promise<Resul
 export async function duplicateModel(id: string, name: string, code: string): Promise<Result<{ id: string }>> {
   await requireAdmin();
   const supabase = await createClient();
-  const { data, error } = await supabase.rpc("duplicate_pricing_model", { p_sheet: id, p_name: name, p_code: code || null });
+  const { data, error } = await callRpc(supabase, "duplicate_pricing_model", { p_sheet: id, p_name: name, p_code: code || null });
   if (error) return { ok: false, error: error.message };
   revalidatePath("/pricing");
   return { ok: true, data: { id: data as string } };
@@ -79,7 +80,7 @@ export async function setPrice(raw: unknown): Promise<Result> {
   if (!parsed.success) return { ok: false, error: "Validation failed", fieldErrors: parsed.error.flatten().fieldErrors };
   const p = parsed.data;
   const supabase = await createClient();
-  const { error } = await supabase.rpc("set_product_price", {
+  const { error } = await callRpc(supabase, "set_product_price", {
     p_sheet: p.pricing_sheet_id, p_product: p.product_id, p_min_qty: p.min_quantity,
     p_max_qty: p.max_quantity ?? null, p_price: p.selling_price, p_currency: p.currency,
     p_effective: p.effective_date ?? null, p_expiration: p.expiration_date ?? null,
