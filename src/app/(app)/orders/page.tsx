@@ -1,29 +1,33 @@
 import type { Metadata } from "next";
-import { ReceiptText, Plus } from "lucide-react";
+import Link from "next/link";
+import { Plus } from "lucide-react";
 import { PageHeader } from "@/components/patterns/page-header";
-import { EmptyState } from "@/components/patterns/empty-state";
 import { Button } from "@/components/ui/button";
+import { OrdersManager } from "@/components/orders/orders-manager";
+import { getOrdersList } from "@/lib/orders/queries";
+import { getCurrentUser } from "@/lib/auth";
 
 export const metadata: Metadata = { title: "Orders" };
+export const dynamic = "force-dynamic";
 
-export default function OrdersPage() {
+export default async function OrdersPage() {
+  const [user, orders] = await Promise.all([getCurrentUser(), getOrdersList()]);
+  const canSeeInternal = user?.role === "owner" || user?.role === "admin";
+
   return (
     <>
       <PageHeader
         title="Orders"
         description="Build orders and issue branded invoices — with live profit, immutable snapshots, and customer payments."
         actions={
-          <Button disabled>
-            <Plus className="h-4 w-4" />
-            New order
+          <Button asChild>
+            <Link href="/orders/new">
+              <Plus className="h-4 w-4" /> New order
+            </Link>
           </Button>
         }
       />
-      <EmptyState
-        icon={ReceiptText}
-        title="No orders yet"
-        description="Orders — the core — arrive in milestone M4. Pricing resolves automatically, internal economics compute live, and every issued order is a permanent, tamper-proof snapshot."
-      />
+      <OrdersManager orders={orders} canSeeInternal={!!canSeeInternal} />
     </>
   );
 }

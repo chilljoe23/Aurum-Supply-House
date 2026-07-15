@@ -148,8 +148,10 @@ export type ClientInvoiceRow = {
 
 export async function getClientInvoices(clientId: string): Promise<ClientInvoiceRow[]> {
   const supabase = await createClient();
+  // Read through v_orders so reps (who no longer have base-table access after
+  // M4 migration 0210) still see their own clients' invoices — masked, scoped.
   const { data } = await supabase
-    .from("invoices")
+    .from("v_orders")
     .select("id,invoice_number,status,total,balance_due,issue_date,created_at")
     .eq("client_id", clientId)
     .order("created_at", { ascending: false })
@@ -167,7 +169,7 @@ export type PurchaseSummary = {
 export async function getClientPurchaseSummary(clientId: string): Promise<PurchaseSummary> {
   const supabase = await createClient();
   const { data } = await supabase
-    .from("invoices")
+    .from("v_orders")
     .select("total,balance_due,issue_date,created_at,status")
     .eq("client_id", clientId)
     .neq("status", "void");
@@ -236,7 +238,7 @@ export type ClientProductRow = { sku: string; product_name: string; units: numbe
 export async function getClientProducts(clientId: string): Promise<ClientProductRow[]> {
   const supabase = await createClient();
   const { data: inv } = await supabase
-    .from("invoices")
+    .from("v_orders")
     .select("id")
     .eq("client_id", clientId)
     .neq("status", "void")
@@ -244,13 +246,13 @@ export async function getClientProducts(clientId: string): Promise<ClientProduct
   const ids = (inv ?? []).map((r) => r.id);
   if (ids.length === 0) return [];
   const { data } = await supabase
-    .from("invoice_items")
+    .from("v_order_items")
     .select("sku,product_name,quantity,line_subtotal")
     .in("invoice_id", ids);
   const agg = new Map<string, ClientProductRow>();
   for (const r of data ?? []) {
-    const key = r.sku;
-    const cur = agg.get(key) ?? { sku: r.sku, product_name: r.product_name, units: 0, revenue: 0 };
+    const key = r.sku ?? "—";
+    const cur = agg.get(key) ?? { sku: key, product_name: r.product_name ?? "—", units: 0, revenue: 0 };
     cur.units += Number(r.quantity ?? 0);
     cur.revenue += Number(r.line_subtotal ?? 0);
     agg.set(key, cur);

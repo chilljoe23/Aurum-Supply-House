@@ -57,6 +57,11 @@ export type Database = {
           default_payment_terms: Database["public"]["Enums"]["payment_terms"];
           default_tax_rate: number;
           default_currency: string;
+          invoice_number_prefix: string;
+          payment_instructions: string | null;
+          remittance_details: string | null;
+          invoice_terms: string | null;
+          invoice_footer: string | null;
           updated_at: string;
         };
         Insert: {
@@ -71,6 +76,11 @@ export type Database = {
           default_payment_terms?: Database["public"]["Enums"]["payment_terms"];
           default_tax_rate?: number;
           default_currency?: string;
+          invoice_number_prefix?: string;
+          payment_instructions?: string | null;
+          remittance_details?: string | null;
+          invoice_terms?: string | null;
+          invoice_footer?: string | null;
           updated_at?: string;
         };
         Update: {
@@ -85,6 +95,11 @@ export type Database = {
           default_payment_terms?: Database["public"]["Enums"]["payment_terms"];
           default_tax_rate?: number;
           default_currency?: string;
+          invoice_number_prefix?: string;
+          payment_instructions?: string | null;
+          remittance_details?: string | null;
+          invoice_terms?: string | null;
+          invoice_footer?: string | null;
           updated_at?: string;
         };
         Relationships: [];
@@ -455,6 +470,9 @@ export type Database = {
           line_subtotal: number;
           line_true_cost: number;
           line_gross_profit: number;
+          price_source: string | null;
+          price_source_sheet: string | null;
+          manual_reason: string | null;
           lot_number: string | null;
           manufacturing_date: string | null;
           expiration_date: string | null;
@@ -479,6 +497,9 @@ export type Database = {
           line_subtotal?: number;
           line_true_cost?: number;
           line_gross_profit?: number;
+          price_source?: string | null;
+          price_source_sheet?: string | null;
+          manual_reason?: string | null;
           lot_number?: string | null;
           manufacturing_date?: string | null;
           expiration_date?: string | null;
@@ -503,6 +524,9 @@ export type Database = {
           line_subtotal?: number;
           line_true_cost?: number;
           line_gross_profit?: number;
+          price_source?: string | null;
+          price_source_sheet?: string | null;
+          manual_reason?: string | null;
           lot_number?: string | null;
           manufacturing_date?: string | null;
           expiration_date?: string | null;
@@ -559,6 +583,7 @@ export type Database = {
           subtotal: number;
           shipping: number;
           fees: number;
+          discount: number;
           tax_rate: number;
           tax_amount: number;
           total: number;
@@ -596,6 +621,7 @@ export type Database = {
           subtotal?: number;
           shipping?: number;
           fees?: number;
+          discount?: number;
           tax_rate?: number;
           tax_amount?: number;
           total?: number;
@@ -633,6 +659,7 @@ export type Database = {
           subtotal?: number;
           shipping?: number;
           fees?: number;
+          discount?: number;
           tax_rate?: number;
           tax_amount?: number;
           total?: number;
@@ -1496,6 +1523,71 @@ export type Database = {
           total: number | null;
           paid: number | null;
           owed: number | null;
+        };
+        Relationships: [];
+      };
+      v_orders: {
+        Row: {
+          id: string | null;
+          invoice_number: string | null;
+          status: Database["public"]["Enums"]["invoice_status"] | null;
+          stage: Database["public"]["Enums"]["order_stage"] | null;
+          client_id: string | null;
+          company_name: string | null;
+          client_snapshot: Json | null;
+          sales_rep_id: string | null;
+          sales_rep_name: string | null;
+          pricing_sheet_id: string | null;
+          pricing_sheet_name: string | null;
+          currency: string | null;
+          subtotal: number | null;
+          discount: number | null;
+          shipping: number | null;
+          fees: number | null;
+          tax_rate: number | null;
+          tax_amount: number | null;
+          total: number | null;
+          amount_paid: number | null;
+          balance_due: number | null;
+          issue_date: string | null;
+          due_date: string | null;
+          sent_at: string | null;
+          paid_at: string | null;
+          notes: string | null;
+          created_at: string | null;
+          updated_at: string | null;
+          total_true_cost: number | null;
+          gross_profit: number | null;
+          gross_margin: number | null;
+          total_commission: number | null;
+          total_expenses: number | null;
+          net_profit: number | null;
+          can_see_internal: boolean | null;
+        };
+        Relationships: [];
+      };
+      v_order_items: {
+        Row: {
+          id: string | null;
+          invoice_id: string | null;
+          product_id: string | null;
+          sku: string | null;
+          product_name: string | null;
+          strength: string | null;
+          pack_size: string | null;
+          manufacturer_name: string | null;
+          quantity: number | null;
+          unit_price: number | null;
+          line_subtotal: number | null;
+          price_overridden: boolean | null;
+          original_unit_price: number | null;
+          price_source: string | null;
+          price_source_sheet: string | null;
+          manual_reason: string | null;
+          created_at: string | null;
+          unit_true_cost: number | null;
+          line_true_cost: number | null;
+          line_gross_profit: number | null;
         };
         Relationships: [];
       };
