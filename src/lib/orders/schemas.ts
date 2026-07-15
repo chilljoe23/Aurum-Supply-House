@@ -58,6 +58,11 @@ export const lineItemSchema = z
     // A manual override is optional; when present a reason is mandatory.
     manual_price: z.coerce.number().gt(0, "Override price must be greater than zero").optional().nullable(),
     manual_reason: opt,
+    // Optional lot traceability captured on the draft line.
+    lot_number: opt,
+    manufacturing_date: dateOpt,
+    expiration_date: dateOpt,
+    retest_date: dateOpt,
   })
   .refine((v) => v.manual_price == null || (v.manual_reason && v.manual_reason.length > 0), {
     message: "A manual price override requires a reason",
@@ -102,6 +107,15 @@ export type PaymentInput = z.infer<typeof paymentSchema>;
 export const voidSchema = z.object({
   invoice_id: z.string().uuid(),
   reason: z.string().trim().min(1, "A reason is required to void an invoice").max(500),
+});
+
+// ---- Lot assignment (post-issue, narrowly scoped + audited) -----------------
+export const lotSchema = z.object({
+  item_id: z.string().uuid(),
+  lot_number: opt,
+  manufacturing_date: dateOpt,
+  expiration_date: dateOpt,
+  retest_date: dateOpt,
 });
 
 // ---- Internal expense -------------------------------------------------------

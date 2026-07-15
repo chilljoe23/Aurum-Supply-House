@@ -1,16 +1,17 @@
-import type { InvoiceViewModel } from "@/lib/orders/invoice-view-model";
+import type { PurchaseOrderViewModel } from "@/lib/purchase-orders/purchase-order-document";
 
 // ============================================================================
-// The Aurum invoice document. Pure presentation of the normalized view model —
-// the SAME component renders the on-screen preview and the printable/PDF output,
-// so the two cannot drift. Colors are committed (not theme tokens): a document
-// reads the same in light/dark and prints cleanly. Palette: deep navy #112B46,
-// muted sage #758B6A, warm ivory #FFFCF8 / cream #F8F6F1, warm-gray border
-// #E4E0D6. Backgrounds are kept light so grayscale printing wastes no ink.
+// The Aurum PURCHASE ORDER document. Shares the approved invoice's visual system
+// (deep navy #112B46, muted sage #758B6A, warm ivory/cream, warm-gray borders,
+// Geist) so it reads as part of the family. The SAME component renders the
+// on-screen preview and the printable/PDF output, so the two cannot drift.
+// Colors are committed hex (not theme tokens): it reads the same light/dark and
+// prints cleanly on grayscale.
 //
-// This component receives ONLY customer-facing data. True cost, profit, margin,
-// commission, internal expenses and price-resolution internals are not fields on
-// InvoiceViewModel and therefore cannot appear here.
+// It receives ONLY PO-appropriate data. Customer selling prices, customer pricing
+// models, gross profit / margin, net profit, commissions, and unrelated customer
+// information are NOT fields on PurchaseOrderViewModel and cannot appear here.
+// The only price shown is unit COST — what Aurum pays the manufacturer.
 // ============================================================================
 
 const NAVY = "#112B46";
@@ -30,21 +31,29 @@ function fmtDate(d: string | null): string {
   return d ? new Date(`${d}T00:00:00`).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" }) : "—";
 }
 
-function StatusChip({ status, isVoid }: { status: string; isVoid: boolean }) {
-  const label = status === "sent" ? "Issued" : status.charAt(0).toUpperCase() + status.slice(1);
-  const color = isVoid ? "#B76A5B" : status === "paid" ? SAGE : NAVY;
+const STATUS_LABELS: Record<string, string> = {
+  draft: "Draft",
+  sent: "Sent",
+  confirmed: "Confirmed",
+  deposit_paid: "Deposit paid",
+  production: "Production",
+  testing: "Testing",
+  ready_to_ship: "Ready to ship",
+  shipped: "Shipped",
+  received: "Received",
+  closed: "Closed",
+  void: "Void",
+};
+
+function StatusChip({ status }: { status: string }) {
+  const isVoid = status === "void";
+  const label = STATUS_LABELS[status] ?? status;
+  const color = isVoid ? "#B76A5B" : status === "received" || status === "closed" ? SAGE : NAVY;
   return (
     <span
       style={{
-        display: "inline-block",
-        border: `1px solid ${color}`,
-        color,
-        borderRadius: 999,
-        padding: "3px 12px",
-        fontSize: 11,
-        letterSpacing: "0.08em",
-        textTransform: "uppercase",
-        fontWeight: 600,
+        display: "inline-block", border: `1px solid ${color}`, color, borderRadius: 999,
+        padding: "3px 12px", fontSize: 11, letterSpacing: "0.08em", textTransform: "uppercase", fontWeight: 600,
       }}
     >
       {label}
@@ -68,27 +77,21 @@ function AddressBlock({ heading, name, lines }: { heading: string; name?: string
   );
 }
 
-export function InvoiceDocument({ model }: { model: InvoiceViewModel }) {
+export function PurchaseOrderDocument({ model }: { model: PurchaseOrderViewModel }) {
   const c = model.currency;
-  const showTax = model.taxAmount > 0 || model.taxRate > 0;
-  const showDiscount = model.discount > 0;
   const showShipping = model.shipping > 0;
   const showFees = model.fees > 0;
+  const showTax = model.tax > 0;
+  const showPayments = model.amountPaid > 0;
 
   return (
     <div
       data-print-root
       style={{
-        background: "#FFFFFF",
-        color: INK,
-        maxWidth: "8.5in",
-        margin: "0 auto",
-        padding: "0.7in 0.75in",
-        boxSizing: "border-box",
+        background: "#FFFFFF", color: INK, maxWidth: "8.5in", margin: "0 auto",
+        padding: "0.7in 0.75in", boxSizing: "border-box",
         fontFamily: "var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif",
-        fontSize: 13,
-        lineHeight: 1.5,
-        position: "relative",
+        fontSize: 13, lineHeight: 1.5, position: "relative",
       }}
     >
       {model.isVoid && (
@@ -104,7 +107,7 @@ export function InvoiceDocument({ model }: { model: InvoiceViewModel }) {
         </div>
       )}
 
-      {/* Header — brand + invoice meta */}
+      {/* Header — brand + PO meta */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 24 }}>
         <div>
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
@@ -123,12 +126,12 @@ export function InvoiceDocument({ model }: { model: InvoiceViewModel }) {
           </div>
         </div>
         <div style={{ textAlign: "right" }}>
-          <div style={{ fontSize: 24, fontWeight: 700, color: NAVY, letterSpacing: "0.02em" }}>INVOICE</div>
+          <div style={{ fontSize: 24, fontWeight: 700, color: NAVY, letterSpacing: "0.02em" }}>PURCHASE ORDER</div>
           <div style={{ fontFamily: "var(--font-geist-mono), ui-monospace, monospace", fontSize: 15, color: INK, marginTop: 2 }}>
-            {model.invoiceNumber}
+            {model.poNumber}
           </div>
           <div style={{ marginTop: 10 }}>
-            <StatusChip status={model.status} isVoid={model.isVoid} />
+            <StatusChip status={model.status} />
           </div>
         </div>
       </div>
@@ -137,15 +140,15 @@ export function InvoiceDocument({ model }: { model: InvoiceViewModel }) {
 
       {/* Meta row */}
       <div style={{ display: "flex", flexWrap: "wrap", gap: 28, padding: "16px 0", borderBottom: `1px solid ${BORDER}` }}>
-        <Meta label="Issue date" value={fmtDate(model.issueDate)} />
-        <Meta label="Due date" value={fmtDate(model.dueDate)} />
-        <Meta label="Terms" value={model.paymentTermsLabel} />
+        <Meta label="PO date" value={fmtDate(model.poDate)} />
+        <Meta label="Expected" value={fmtDate(model.expectedDate)} />
+        <Meta label="Payment terms" value={model.paymentTerms || "—"} />
         <Meta label="Currency" value={c} />
       </div>
 
-      {/* Addresses */}
+      {/* Addresses — vendor (manufacturer) + ship-to (Aurum) */}
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 28, padding: "20px 0" }}>
-        <AddressBlock heading="Bill to" name={model.billTo.name} lines={model.billTo.lines} />
+        <AddressBlock heading="Vendor" name={model.vendor.name} lines={model.vendor.lines} />
         <AddressBlock heading="Ship to" name={model.shipTo.name} lines={model.shipTo.lines} />
       </div>
 
@@ -153,35 +156,28 @@ export function InvoiceDocument({ model }: { model: InvoiceViewModel }) {
       <table style={{ width: "100%", borderCollapse: "collapse", marginTop: 4 }}>
         <thead>
           <tr style={{ borderBottom: `2px solid ${NAVY}` }}>
-            <Th style={{ width: "16%" }}>SKU</Th>
+            <Th style={{ width: "14%" }}>SKU</Th>
+            <Th style={{ width: "14%" }}>Mfr SKU</Th>
             <Th>Description</Th>
-            <Th align="right" style={{ width: "10%" }}>Qty</Th>
-            <Th align="right" style={{ width: "16%" }}>Unit price</Th>
-            <Th align="right" style={{ width: "16%" }}>Line total</Th>
+            <Th align="right" style={{ width: "9%" }}>Qty</Th>
+            <Th align="right" style={{ width: "15%" }}>Unit cost</Th>
+            <Th align="right" style={{ width: "15%" }}>Line total</Th>
           </tr>
         </thead>
         <tbody>
           {model.lines.map((l, i) => (
             <tr key={i} style={{ borderBottom: `1px solid ${BORDER}` }}>
               <Td style={{ fontFamily: "var(--font-geist-mono), ui-monospace, monospace", fontSize: 12 }}>{l.sku}</Td>
-              <Td>
-                {l.description}
-                {(l.lotNumber || l.expirationDate) && (
-                  <div style={{ marginTop: 2, fontSize: 11, color: MUTED }}>
-                    {l.lotNumber ? `Lot ${l.lotNumber}` : ""}
-                    {l.lotNumber && l.expirationDate ? " · " : ""}
-                    {l.expirationDate ? `Exp ${fmtDate(l.expirationDate)}` : ""}
-                  </div>
-                )}
-              </Td>
+              <Td style={{ fontFamily: "var(--font-geist-mono), ui-monospace, monospace", fontSize: 12 }}>{l.manufacturerSku || "—"}</Td>
+              <Td>{l.description}</Td>
               <Td align="right">{qty(l.quantity)}</Td>
-              <Td align="right">{money(l.unitPrice, c)}</Td>
+              <Td align="right">{money(l.unitCost, c)}</Td>
               <Td align="right">{money(l.lineTotal, c)}</Td>
             </tr>
           ))}
           {model.lines.length === 0 && (
             <tr>
-              <Td colSpan={5} style={{ color: MUTED, textAlign: "center", padding: "24px 0" }}>No line items.</Td>
+              <Td colSpan={6} style={{ color: MUTED, textAlign: "center", padding: "24px 0" }}>No line items.</Td>
             </tr>
           )}
         </tbody>
@@ -191,44 +187,45 @@ export function InvoiceDocument({ model }: { model: InvoiceViewModel }) {
       <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 18 }}>
         <div style={{ width: "58%", maxWidth: 340 }}>
           <TotalRow label="Subtotal" value={money(model.subtotal, c)} />
-          {showDiscount && <TotalRow label="Discount" value={`(${money(model.discount, c)})`} />}
           {showShipping && <TotalRow label="Shipping" value={money(model.shipping, c)} />}
           {showFees && <TotalRow label="Fees" value={money(model.fees, c)} />}
-          {showTax && <TotalRow label={`Tax (${(model.taxRate * 100).toFixed(model.taxRate * 100 % 1 === 0 ? 0 : 3)}%)`} value={money(model.taxAmount, c)} />}
+          {showTax && <TotalRow label="Tax" value={money(model.tax, c)} />}
           <div style={{ height: 1, background: NAVY, margin: "8px 0" }} />
           <TotalRow label="Total" value={money(model.total, c)} strong />
-          {model.amountPaid > 0 && <TotalRow label="Amount paid" value={`(${money(model.amountPaid, c)})`} />}
-          <div
-            style={{
-              display: "flex", justifyContent: "space-between", marginTop: 8, padding: "10px 12px",
-              background: model.isVoid ? "#FBF3F1" : "#F3F6F1", borderRadius: 8,
-              border: `1px solid ${model.isVoid ? "#E6CFC8" : "#DCE6D5"}`,
-            }}
-          >
-            <span style={{ fontWeight: 700, color: NAVY }}>Balance due</span>
-            <span style={{ fontWeight: 700, color: NAVY }}>{money(model.balanceDue, c)}</span>
+          {showPayments && <TotalRow label="Amount paid" value={`(${money(model.amountPaid, c)})`} />}
+          {showPayments && (
+            <div
+              style={{
+                display: "flex", justifyContent: "space-between", marginTop: 8, padding: "10px 12px",
+                background: model.isVoid ? "#FBF3F1" : "#F3F6F1", borderRadius: 8,
+                border: `1px solid ${model.isVoid ? "#E6CFC8" : "#DCE6D5"}`,
+              }}
+            >
+              <span style={{ fontWeight: 700, color: NAVY }}>Balance due</span>
+              <span style={{ fontWeight: 700, color: NAVY }}>{money(model.balanceDue, c)}</span>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Notes / manufacturing instructions + signature */}
+      <div style={{ marginTop: 28, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 28 }}>
+        <Panel heading="Notes & manufacturing instructions">
+          <div style={{ whiteSpace: "pre-wrap" }}>{model.notes || "—"}</div>
+        </Panel>
+        <div>
+          <div style={{ fontSize: 11, letterSpacing: "0.1em", textTransform: "uppercase", color: SAGE, fontWeight: 600, marginBottom: 6 }}>
+            Authorized by
+          </div>
+          <div style={{ marginTop: 34, borderTop: `1px solid ${INK}`, paddingTop: 6, color: MUTED, fontSize: 12 }}>
+            Signature &amp; date
           </div>
         </div>
       </div>
 
-      {/* Payment instructions + notes */}
-      <div style={{ marginTop: 28, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 28 }}>
-        {(model.paymentInstructions || model.remittanceDetails) && (
-          <Panel heading="Payment instructions">
-            {model.paymentInstructions && <div style={{ whiteSpace: "pre-wrap" }}>{model.paymentInstructions}</div>}
-            {model.remittanceDetails && <div style={{ whiteSpace: "pre-wrap", marginTop: 8, color: MUTED }}>{model.remittanceDetails}</div>}
-          </Panel>
-        )}
-        {model.notes && (
-          <Panel heading="Notes & terms">
-            <div style={{ whiteSpace: "pre-wrap" }}>{model.notes}</div>
-          </Panel>
-        )}
-      </div>
-
       {/* Footer */}
       <div style={{ marginTop: 32, paddingTop: 14, borderTop: `1px solid ${BORDER}`, textAlign: "center", color: MUTED, fontSize: 12 }}>
-        {model.footer || `Thank you for your business — ${model.company.name}.`}
+        {model.footer || `Purchase order issued by ${model.company.name}.`}
       </div>
     </div>
   );
@@ -242,7 +239,6 @@ function Meta({ label, value }: { label: string; value: string }) {
     </div>
   );
 }
-
 function Th({ children, align = "left", style }: { children?: React.ReactNode; align?: "left" | "right"; style?: React.CSSProperties }) {
   return (
     <th style={{ textAlign: align, padding: "8px 6px", fontSize: 11, letterSpacing: "0.06em", textTransform: "uppercase", color: NAVY, fontWeight: 600, ...style }}>

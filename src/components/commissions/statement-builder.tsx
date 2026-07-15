@@ -67,6 +67,9 @@ export function StatementBuilder({ commissions, company }: { commissions: Commis
 
     const total = rows.reduce((s, c) => s + c.amount, 0);
     const paidTotal = rows.filter((c) => c.status === "paid").reduce((s, c) => s + c.amount, 0);
+    const earnedTotal = rows.filter((c) => c.status === "earned").reduce((s, c) => s + c.amount, 0);
+    const approvedTotal = rows.filter((c) => c.status === "approved").reduce((s, c) => s + c.amount, 0);
+    const owedTotal = earnedTotal + approvedTotal;
     const periodLabel = from || to ? `${fmtDate(from) ?? "Beginning"} – ${fmtDate(to) ?? "Present"}` : "All dates";
 
     setModel({
@@ -78,6 +81,9 @@ export function StatementBuilder({ commissions, company }: { commissions: Commis
       rows: statementRows,
       total,
       paidTotal,
+      earnedTotal,
+      approvedTotal,
+      owedTotal,
     });
   }
 

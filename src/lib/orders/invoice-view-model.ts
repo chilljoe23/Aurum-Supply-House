@@ -16,6 +16,11 @@ export type InvoiceViewLine = {
   quantity: number;
   unitPrice: number;
   lineTotal: number;
+  // Optional lot traceability (COA path deliberately excluded — never on documents).
+  lotNumber: string | null;
+  manufacturingDate: string | null;
+  expirationDate: string | null;
+  retestDate: string | null;
 };
 
 export type InvoiceViewModel = {
@@ -101,6 +106,10 @@ export type InvoiceItemInput = {
   quantity: number;
   unit_price: number;
   line_subtotal: number;
+  lot_number?: string | null;
+  manufacturing_date?: string | null;
+  expiration_date?: string | null;
+  retest_date?: string | null;
 };
 
 export type SettingsInput = {
@@ -151,6 +160,10 @@ export function buildInvoiceViewModel(
       quantity: Number(it.quantity),
       unitPrice: Number(it.unit_price),
       lineTotal: Number(it.line_subtotal),
+      lotNumber: it.lot_number ?? null,
+      manufacturingDate: it.manufacturing_date ?? null,
+      expirationDate: it.expiration_date ?? null,
+      retestDate: it.retest_date ?? null,
     })),
     subtotal: Number(header.subtotal),
     discount: Number(header.discount),

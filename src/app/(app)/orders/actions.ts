@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient as createServerClient } from "@/lib/supabase/server";
+import { createUntypedClient } from "@/lib/supabase/untyped";
 import { callRpc } from "@/lib/supabase/rpc";
 import { getCurrentUser } from "@/lib/auth";
 import {
@@ -10,6 +11,7 @@ import {
   paymentSchema,
   voidSchema,
   expenseSchema,
+  lotSchema,
 } from "@/lib/orders/schemas";
 
 export type Result<T = unknown> =
@@ -54,6 +56,10 @@ export async function saveOrderDraft(raw: unknown): Promise<Result<{ id: string 
       quantity: l.quantity,
       manual_price: l.manual_price ?? null,
       manual_reason: l.manual_reason ?? null,
+      lot_number: l.lot_number ?? null,
+      manufacturing_date: l.manufacturing_date ?? null,
+      expiration_date: l.expiration_date ?? null,
+      retest_date: l.retest_date ?? null,
     })),
   });
   if (error) return { ok: false, error: friendly(error) };
@@ -175,6 +181,28 @@ export async function deleteExpense(expenseId: string, invoiceId: string): Promi
   await requireStaff();
   const supabase = await createServerClient();
   const { error } = await supabase.rpc("delete_order_expense", { p_expense: expenseId });
+  if (error) return { ok: false, error: friendly(error) };
+  revalidatePath(`/orders/${invoiceId}`);
+  return { ok: true };
+}
+
+// ---- Assign a lot number to an invoice line ---------------------------------
+// Works on drafts AND issued invoices via the narrowly-scoped, audited RPC
+// (app.assign_invoice_lot). General issued-invoice immutability is unchanged.
+export async function assignInvoiceLot(raw: unknown, invoiceId: string): Promise<Result> {
+  await requireStaff();
+  const parsed = lotSchema.safeParse(raw);
+  if (!parsed.success) return { ok: false, error: "Validation failed", fieldErrors: parsed.error.flatten().fieldErrors };
+  const l = parsed.data;
+  const supabase = await createUntypedClient();
+  const { error } = await supabase.rpc("assign_invoice_lot", {
+    p_item: l.item_id,
+    p_lot: l.lot_number ?? null,
+    p_manufacturing_date: l.manufacturing_date ?? null,
+    p_expiration_date: l.expiration_date ?? null,
+    p_retest_date: l.retest_date ?? null,
+    p_coa_path: null,
+  });
   if (error) return { ok: false, error: friendly(error) };
   revalidatePath(`/orders/${invoiceId}`);
   return { ok: true };

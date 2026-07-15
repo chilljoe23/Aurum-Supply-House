@@ -1396,6 +1396,13 @@ export type Database = {
             referencedRelation: "purchase_orders"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "manufacturer_payments_purchase_order_id_fkey"
+            columns: ["purchase_order_id"]
+            isOneToOne: false
+            referencedRelation: "v_purchase_orders"
+            referencedColumns: ["id"]
+          },
         ]
       }
       manufacturer_products: {
@@ -2403,27 +2410,36 @@ export type Database = {
       purchase_order_attachments: {
         Row: {
           created_at: string
+          file_type: string | null
           filename: string
           id: string
+          note: string | null
           purchase_order_id: string
+          size_bytes: number | null
           storage_path: string
           type: Database["public"]["Enums"]["po_attachment_type"]
           uploaded_by: string | null
         }
         Insert: {
           created_at?: string
+          file_type?: string | null
           filename: string
           id?: string
+          note?: string | null
           purchase_order_id: string
+          size_bytes?: number | null
           storage_path: string
           type?: Database["public"]["Enums"]["po_attachment_type"]
           uploaded_by?: string | null
         }
         Update: {
           created_at?: string
+          file_type?: string | null
           filename?: string
           id?: string
+          note?: string | null
           purchase_order_id?: string
+          size_bytes?: number | null
           storage_path?: string
           type?: Database["public"]["Enums"]["po_attachment_type"]
           uploaded_by?: string | null
@@ -2434,6 +2450,13 @@ export type Database = {
             columns: ["purchase_order_id"]
             isOneToOne: false
             referencedRelation: "purchase_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "purchase_order_attachments_purchase_order_id_fkey"
+            columns: ["purchase_order_id"]
+            isOneToOne: false
+            referencedRelation: "v_purchase_orders"
             referencedColumns: ["id"]
           },
           {
@@ -2454,45 +2477,142 @@ export type Database = {
       }
       purchase_order_items: {
         Row: {
+          cost_reason: string | null
           created_at: string
+          created_by: string | null
+          currency: string
           id: string
+          lead_time_days: number | null
           line_total: number
+          manufacturer_cost_history_id: string | null
+          manufacturer_description: string | null
+          manufacturer_id: string | null
+          manufacturer_product_id: string | null
+          manufacturer_sku: string | null
+          moq: number | null
           name: string
           notes: string | null
+          order_multiple: number | null
+          pack_size: string | null
           product_id: string | null
           purchase_order_id: string
           quantity: number
           received_cost_logged: boolean
+          resolved_cost_source: string | null
+          resolved_tier_max: number | null
+          resolved_tier_min: number | null
           sku: string
+          strength: string | null
           unit_cost: number
         }
         Insert: {
+          cost_reason?: string | null
           created_at?: string
+          created_by?: string | null
+          currency?: string
           id?: string
+          lead_time_days?: number | null
           line_total?: number
+          manufacturer_cost_history_id?: string | null
+          manufacturer_description?: string | null
+          manufacturer_id?: string | null
+          manufacturer_product_id?: string | null
+          manufacturer_sku?: string | null
+          moq?: number | null
           name: string
           notes?: string | null
+          order_multiple?: number | null
+          pack_size?: string | null
           product_id?: string | null
           purchase_order_id: string
           quantity: number
           received_cost_logged?: boolean
+          resolved_cost_source?: string | null
+          resolved_tier_max?: number | null
+          resolved_tier_min?: number | null
           sku: string
+          strength?: string | null
           unit_cost: number
         }
         Update: {
+          cost_reason?: string | null
           created_at?: string
+          created_by?: string | null
+          currency?: string
           id?: string
+          lead_time_days?: number | null
           line_total?: number
+          manufacturer_cost_history_id?: string | null
+          manufacturer_description?: string | null
+          manufacturer_id?: string | null
+          manufacturer_product_id?: string | null
+          manufacturer_sku?: string | null
+          moq?: number | null
           name?: string
           notes?: string | null
+          order_multiple?: number | null
+          pack_size?: string | null
           product_id?: string | null
           purchase_order_id?: string
           quantity?: number
           received_cost_logged?: boolean
+          resolved_cost_source?: string | null
+          resolved_tier_max?: number | null
+          resolved_tier_min?: number | null
           sku?: string
+          strength?: string | null
           unit_cost?: number
         }
         Relationships: [
+          {
+            foreignKeyName: "purchase_order_items_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "purchase_order_items_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "v_profit_by_rep"
+            referencedColumns: ["rep_id"]
+          },
+          {
+            foreignKeyName: "purchase_order_items_manufacturer_cost_history_id_fkey"
+            columns: ["manufacturer_cost_history_id"]
+            isOneToOne: false
+            referencedRelation: "manufacturer_cost_bands"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "purchase_order_items_manufacturer_cost_history_id_fkey"
+            columns: ["manufacturer_cost_history_id"]
+            isOneToOne: false
+            referencedRelation: "manufacturer_cost_history"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "purchase_order_items_manufacturer_id_fkey"
+            columns: ["manufacturer_id"]
+            isOneToOne: false
+            referencedRelation: "manufacturers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "purchase_order_items_manufacturer_product_id_fkey"
+            columns: ["manufacturer_product_id"]
+            isOneToOne: false
+            referencedRelation: "manufacturer_product_costs"
+            referencedColumns: ["manufacturer_product_id"]
+          },
+          {
+            foreignKeyName: "purchase_order_items_manufacturer_product_id_fkey"
+            columns: ["manufacturer_product_id"]
+            isOneToOne: false
+            referencedRelation: "manufacturer_products"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "purchase_order_items_product_id_fkey"
             columns: ["product_id"]
@@ -2512,6 +2632,173 @@ export type Database = {
             columns: ["purchase_order_id"]
             isOneToOne: false
             referencedRelation: "purchase_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "purchase_order_items_purchase_order_id_fkey"
+            columns: ["purchase_order_id"]
+            isOneToOne: false
+            referencedRelation: "v_purchase_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      purchase_order_receipts: {
+        Row: {
+          created_at: string
+          id: string
+          lot_number: string | null
+          notes: string | null
+          purchase_order_id: string
+          purchase_order_item_id: string
+          quantity_received: number
+          received_by: string | null
+          received_date: string
+          shipment_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          lot_number?: string | null
+          notes?: string | null
+          purchase_order_id: string
+          purchase_order_item_id: string
+          quantity_received: number
+          received_by?: string | null
+          received_date?: string
+          shipment_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          lot_number?: string | null
+          notes?: string | null
+          purchase_order_id?: string
+          purchase_order_item_id?: string
+          quantity_received?: number
+          received_by?: string | null
+          received_date?: string
+          shipment_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "purchase_order_receipts_purchase_order_id_fkey"
+            columns: ["purchase_order_id"]
+            isOneToOne: false
+            referencedRelation: "purchase_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "purchase_order_receipts_purchase_order_id_fkey"
+            columns: ["purchase_order_id"]
+            isOneToOne: false
+            referencedRelation: "v_purchase_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "purchase_order_receipts_purchase_order_item_id_fkey"
+            columns: ["purchase_order_item_id"]
+            isOneToOne: false
+            referencedRelation: "purchase_order_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "purchase_order_receipts_purchase_order_item_id_fkey"
+            columns: ["purchase_order_item_id"]
+            isOneToOne: false
+            referencedRelation: "v_purchase_order_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "purchase_order_receipts_received_by_fkey"
+            columns: ["received_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "purchase_order_receipts_received_by_fkey"
+            columns: ["received_by"]
+            isOneToOne: false
+            referencedRelation: "v_profit_by_rep"
+            referencedColumns: ["rep_id"]
+          },
+          {
+            foreignKeyName: "purchase_order_receipts_shipment_id_fkey"
+            columns: ["shipment_id"]
+            isOneToOne: false
+            referencedRelation: "purchase_order_shipments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      purchase_order_shipments: {
+        Row: {
+          carrier: string | null
+          created_at: string
+          created_by: string | null
+          expected_arrival_date: string | null
+          id: string
+          notes: string | null
+          purchase_order_id: string
+          received_date: string | null
+          ship_date: string | null
+          tracking_number: string | null
+          updated_at: string
+        }
+        Insert: {
+          carrier?: string | null
+          created_at?: string
+          created_by?: string | null
+          expected_arrival_date?: string | null
+          id?: string
+          notes?: string | null
+          purchase_order_id: string
+          received_date?: string | null
+          ship_date?: string | null
+          tracking_number?: string | null
+          updated_at?: string
+        }
+        Update: {
+          carrier?: string | null
+          created_at?: string
+          created_by?: string | null
+          expected_arrival_date?: string | null
+          id?: string
+          notes?: string | null
+          purchase_order_id?: string
+          received_date?: string | null
+          ship_date?: string | null
+          tracking_number?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "purchase_order_shipments_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "purchase_order_shipments_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "v_profit_by_rep"
+            referencedColumns: ["rep_id"]
+          },
+          {
+            foreignKeyName: "purchase_order_shipments_purchase_order_id_fkey"
+            columns: ["purchase_order_id"]
+            isOneToOne: false
+            referencedRelation: "purchase_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "purchase_order_shipments_purchase_order_id_fkey"
+            columns: ["purchase_order_id"]
+            isOneToOne: false
+            referencedRelation: "v_purchase_orders"
             referencedColumns: ["id"]
           },
         ]
@@ -2566,6 +2853,13 @@ export type Database = {
             referencedRelation: "purchase_orders"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "purchase_order_status_history_purchase_order_id_fkey"
+            columns: ["purchase_order_id"]
+            isOneToOne: false
+            referencedRelation: "v_purchase_orders"
+            referencedColumns: ["id"]
+          },
         ]
       }
       purchase_orders: {
@@ -2584,6 +2878,7 @@ export type Database = {
           manufacturer_id: string | null
           manufacturer_snapshot: Json
           notes: string | null
+          payment_terms: string | null
           po_number: string
           received_at: string | null
           sent_at: string | null
@@ -2609,6 +2904,7 @@ export type Database = {
           manufacturer_id?: string | null
           manufacturer_snapshot?: Json
           notes?: string | null
+          payment_terms?: string | null
           po_number: string
           received_at?: string | null
           sent_at?: string | null
@@ -2634,6 +2930,7 @@ export type Database = {
           manufacturer_id?: string | null
           manufacturer_snapshot?: Json
           notes?: string | null
+          payment_terms?: string | null
           po_number?: string
           received_at?: string | null
           sent_at?: string | null
@@ -3099,16 +3396,74 @@ export type Database = {
           },
         ]
       }
+      v_manufacturer_payments: {
+        Row: {
+          amount: number | null
+          created_at: string | null
+          created_by: string | null
+          id: string | null
+          manufacturer_id: string | null
+          manufacturer_name: string | null
+          method: Database["public"]["Enums"]["payment_method"] | null
+          notes: string | null
+          payment_date: string | null
+          po_number: string | null
+          purchase_order_id: string | null
+          reference: string | null
+          signed_amount: number | null
+          type: Database["public"]["Enums"]["manufacturer_payment_type"] | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "manufacturer_payments_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "manufacturer_payments_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "v_profit_by_rep"
+            referencedColumns: ["rep_id"]
+          },
+          {
+            foreignKeyName: "manufacturer_payments_purchase_order_id_fkey"
+            columns: ["purchase_order_id"]
+            isOneToOne: false
+            referencedRelation: "purchase_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "manufacturer_payments_purchase_order_id_fkey"
+            columns: ["purchase_order_id"]
+            isOneToOne: false
+            referencedRelation: "v_purchase_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "purchase_orders_manufacturer_id_fkey"
+            columns: ["manufacturer_id"]
+            isOneToOne: false
+            referencedRelation: "manufacturers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       v_order_items: {
         Row: {
           created_at: string | null
+          expiration_date: string | null
           id: string | null
           invoice_id: string | null
           line_gross_profit: number | null
           line_subtotal: number | null
           line_true_cost: number | null
+          lot_number: string | null
           manual_reason: string | null
           manufacturer_name: string | null
+          manufacturing_date: string | null
           original_unit_price: number | null
           pack_size: string | null
           price_overridden: boolean | null
@@ -3117,6 +3472,7 @@ export type Database = {
           product_id: string | null
           product_name: string | null
           quantity: number | null
+          retest_date: string | null
           sku: string | null
           strength: string | null
           unit_price: number | null
@@ -3124,13 +3480,16 @@ export type Database = {
         }
         Insert: {
           created_at?: string | null
+          expiration_date?: string | null
           id?: string | null
           invoice_id?: string | null
           line_gross_profit?: never
           line_subtotal?: number | null
           line_true_cost?: never
+          lot_number?: string | null
           manual_reason?: string | null
           manufacturer_name?: string | null
+          manufacturing_date?: string | null
           original_unit_price?: number | null
           pack_size?: string | null
           price_overridden?: boolean | null
@@ -3139,6 +3498,7 @@ export type Database = {
           product_id?: string | null
           product_name?: string | null
           quantity?: number | null
+          retest_date?: string | null
           sku?: string | null
           strength?: string | null
           unit_price?: number | null
@@ -3146,13 +3506,16 @@ export type Database = {
         }
         Update: {
           created_at?: string | null
+          expiration_date?: string | null
           id?: string | null
           invoice_id?: string | null
           line_gross_profit?: never
           line_subtotal?: number | null
           line_true_cost?: never
+          lot_number?: string | null
           manual_reason?: string | null
           manufacturer_name?: string | null
+          manufacturing_date?: string | null
           original_unit_price?: number | null
           pack_size?: string | null
           price_overridden?: boolean | null
@@ -3161,6 +3524,7 @@ export type Database = {
           product_id?: string | null
           product_name?: string | null
           quantity?: number | null
+          retest_date?: string | null
           sku?: string | null
           strength?: string | null
           unit_price?: number | null
@@ -3383,6 +3747,237 @@ export type Database = {
         }
         Relationships: []
       }
+      v_purchase_order_items: {
+        Row: {
+          cost_reason: string | null
+          created_at: string | null
+          created_by: string | null
+          currency: string | null
+          description: string | null
+          id: string | null
+          lead_time_days: number | null
+          line_total: number | null
+          manufacturer_cost_history_id: string | null
+          manufacturer_description: string | null
+          manufacturer_id: string | null
+          manufacturer_product_id: string | null
+          manufacturer_sku: string | null
+          moq: number | null
+          notes: string | null
+          order_multiple: number | null
+          pack_size: string | null
+          product_id: string | null
+          product_name: string | null
+          purchase_order_id: string | null
+          quantity: number | null
+          quantity_received: number | null
+          received_cost_logged: boolean | null
+          resolved_cost_source: string | null
+          resolved_tier_max: number | null
+          resolved_tier_min: number | null
+          sku: string | null
+          strength: string | null
+          unit_cost: number | null
+        }
+        Insert: {
+          cost_reason?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          currency?: string | null
+          description?: never
+          id?: string | null
+          lead_time_days?: number | null
+          line_total?: number | null
+          manufacturer_cost_history_id?: string | null
+          manufacturer_description?: string | null
+          manufacturer_id?: string | null
+          manufacturer_product_id?: string | null
+          manufacturer_sku?: string | null
+          moq?: number | null
+          notes?: string | null
+          order_multiple?: number | null
+          pack_size?: string | null
+          product_id?: string | null
+          product_name?: string | null
+          purchase_order_id?: string | null
+          quantity?: number | null
+          quantity_received?: never
+          received_cost_logged?: boolean | null
+          resolved_cost_source?: string | null
+          resolved_tier_max?: number | null
+          resolved_tier_min?: number | null
+          sku?: string | null
+          strength?: string | null
+          unit_cost?: number | null
+        }
+        Update: {
+          cost_reason?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          currency?: string | null
+          description?: never
+          id?: string | null
+          lead_time_days?: number | null
+          line_total?: number | null
+          manufacturer_cost_history_id?: string | null
+          manufacturer_description?: string | null
+          manufacturer_id?: string | null
+          manufacturer_product_id?: string | null
+          manufacturer_sku?: string | null
+          moq?: number | null
+          notes?: string | null
+          order_multiple?: number | null
+          pack_size?: string | null
+          product_id?: string | null
+          product_name?: string | null
+          purchase_order_id?: string | null
+          quantity?: number | null
+          quantity_received?: never
+          received_cost_logged?: boolean | null
+          resolved_cost_source?: string | null
+          resolved_tier_max?: number | null
+          resolved_tier_min?: number | null
+          sku?: string | null
+          strength?: string | null
+          unit_cost?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "purchase_order_items_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "purchase_order_items_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "v_profit_by_rep"
+            referencedColumns: ["rep_id"]
+          },
+          {
+            foreignKeyName: "purchase_order_items_manufacturer_cost_history_id_fkey"
+            columns: ["manufacturer_cost_history_id"]
+            isOneToOne: false
+            referencedRelation: "manufacturer_cost_bands"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "purchase_order_items_manufacturer_cost_history_id_fkey"
+            columns: ["manufacturer_cost_history_id"]
+            isOneToOne: false
+            referencedRelation: "manufacturer_cost_history"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "purchase_order_items_manufacturer_id_fkey"
+            columns: ["manufacturer_id"]
+            isOneToOne: false
+            referencedRelation: "manufacturers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "purchase_order_items_manufacturer_product_id_fkey"
+            columns: ["manufacturer_product_id"]
+            isOneToOne: false
+            referencedRelation: "manufacturer_product_costs"
+            referencedColumns: ["manufacturer_product_id"]
+          },
+          {
+            foreignKeyName: "purchase_order_items_manufacturer_product_id_fkey"
+            columns: ["manufacturer_product_id"]
+            isOneToOne: false
+            referencedRelation: "manufacturer_products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "purchase_order_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "catalog_products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "purchase_order_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "purchase_order_items_purchase_order_id_fkey"
+            columns: ["purchase_order_id"]
+            isOneToOne: false
+            referencedRelation: "purchase_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "purchase_order_items_purchase_order_id_fkey"
+            columns: ["purchase_order_id"]
+            isOneToOne: false
+            referencedRelation: "v_purchase_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      v_purchase_orders: {
+        Row: {
+          amount_paid: number | null
+          balance_due: number | null
+          confirmed_at: string | null
+          created_at: string | null
+          created_by: string | null
+          currency: string | null
+          deposit_amount: number | null
+          expected_date: string | null
+          fees: number | null
+          id: string | null
+          line_count: number | null
+          manufacturer_id: string | null
+          manufacturer_name: string | null
+          manufacturer_status:
+            | Database["public"]["Enums"]["product_status"]
+            | null
+          next_expected_arrival: string | null
+          notes: string | null
+          payment_terms: string | null
+          po_number: string | null
+          received_at: string | null
+          sent_at: string | null
+          shipping: number | null
+          status: Database["public"]["Enums"]["po_status"] | null
+          subtotal: number | null
+          tax: number | null
+          total: number | null
+          total_quantity: number | null
+          tracking_numbers: string | null
+          updated_at: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "purchase_orders_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "purchase_orders_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "v_profit_by_rep"
+            referencedColumns: ["rep_id"]
+          },
+          {
+            foreignKeyName: "purchase_orders_manufacturer_id_fkey"
+            columns: ["manufacturer_id"]
+            isOneToOne: false
+            referencedRelation: "manufacturers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       v_purchase_spend_monthly: {
         Row: {
           month: string | null
@@ -3413,7 +4008,42 @@ export type Database = {
         }
         Returns: string
       }
+      add_po_attachment: {
+        Args: {
+          p_file_type: string
+          p_filename: string
+          p_note: string
+          p_po: string
+          p_size: number
+          p_storage_path: string
+          p_type: string
+        }
+        Returns: string
+      }
+      add_po_shipment: {
+        Args: {
+          p_carrier: string
+          p_expected_arrival: string
+          p_notes: string
+          p_po: string
+          p_received_date: string
+          p_ship_date: string
+          p_tracking: string
+        }
+        Returns: string
+      }
       approve_commission: { Args: { p_commission: string }; Returns: undefined }
+      assign_invoice_lot: {
+        Args: {
+          p_coa_path: string
+          p_expiration_date: string
+          p_item: string
+          p_lot: string
+          p_manufacturing_date: string
+          p_retest_date: string
+        }
+        Returns: undefined
+      }
       assign_pricing_model: {
         Args: {
           p_client: string
@@ -3462,6 +4092,7 @@ export type Database = {
       }
       delete_draft: { Args: { p_invoice: string }; Returns: undefined }
       delete_order_expense: { Args: { p_expense: string }; Returns: undefined }
+      delete_po_draft: { Args: { p_po: string }; Returns: undefined }
       duplicate_pricing_model: {
         Args: { p_code: string; p_name: string; p_sheet: string }
         Returns: string
@@ -3515,6 +4146,29 @@ export type Database = {
           p_set_preferred?: boolean
         }
         Returns: Json
+      }
+      receive_po_line: {
+        Args: {
+          p_item: string
+          p_lot: string
+          p_notes: string
+          p_quantity: number
+          p_received_date: string
+          p_shipment: string
+        }
+        Returns: string
+      }
+      record_manufacturer_payment: {
+        Args: {
+          p_amount: number
+          p_date: string
+          p_method: string
+          p_notes: string
+          p_po: string
+          p_reference: string
+          p_type: string
+        }
+        Returns: string
       }
       record_payment: {
         Args: {
@@ -3574,6 +4228,22 @@ export type Database = {
         }
         Returns: string
       }
+      save_po_draft: {
+        Args: {
+          p_currency: string
+          p_expected_date: string
+          p_fees: number
+          p_lines: Json
+          p_manufacturer: string
+          p_notes: string
+          p_payment_terms: string
+          p_po: string
+          p_shipping: number
+          p_tax: number
+        }
+        Returns: string
+      }
+      send_po: { Args: { p_po: string }; Returns: string }
       set_client_override: {
         Args: {
           p_active: boolean
@@ -3622,6 +4292,10 @@ export type Database = {
       }
       show_limit: { Args: never; Returns: number }
       show_trgm: { Args: { "": string }; Returns: string[] }
+      transition_po_status: {
+        Args: { p_note: string; p_po: string; p_to: string }
+        Returns: undefined
+      }
       update_commission: {
         Args: {
           p_commission: string
@@ -3661,6 +4335,7 @@ export type Database = {
         Args: { p_invoice: string; p_reason: string }
         Returns: undefined
       }
+      void_po: { Args: { p_po: string; p_reason: string }; Returns: undefined }
     }
     Enums: {
       client_status: "active" | "inactive" | "prospect"
@@ -3707,6 +4382,8 @@ export type Database = {
         | "packing_list"
         | "tracking"
         | "other"
+        | "testing_document"
+        | "shipping_document"
       po_status:
         | "draft"
         | "sent"
@@ -3718,6 +4395,7 @@ export type Database = {
         | "shipped"
         | "received"
         | "closed"
+        | "void"
       product_status: "active" | "discontinued"
       profile_status: "active" | "inactive"
       sheet_status: "active" | "archived"
@@ -3898,6 +4576,8 @@ export const Constants = {
         "packing_list",
         "tracking",
         "other",
+        "testing_document",
+        "shipping_document",
       ],
       po_status: [
         "draft",
@@ -3910,6 +4590,7 @@ export const Constants = {
         "shipped",
         "received",
         "closed",
+        "void",
       ],
       product_status: ["active", "discontinued"],
       profile_status: ["active", "inactive"],

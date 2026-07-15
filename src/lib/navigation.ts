@@ -26,7 +26,7 @@ export const NAV_ITEMS: NavItem[] = [
   { label: "Clients", href: "/clients", icon: Users },
   { label: "Catalog", href: "/catalog", icon: Package },
   { label: "Pricing", href: "/pricing", icon: Tags },
-  { label: "Purchasing", href: "/purchasing", icon: Factory },
+  { label: "Purchasing", href: "/purchasing", icon: Factory, roles: ["owner", "admin"] },
   { label: "Orders", href: "/orders", icon: ReceiptText },
   { label: "Commissions", href: "/commissions", icon: HandCoins },
   { label: "Insights", href: "/insights", icon: BarChart3 },

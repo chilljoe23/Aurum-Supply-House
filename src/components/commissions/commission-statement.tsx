@@ -36,6 +36,9 @@ export type StatementModel = {
   rows: StatementRow[];
   total: number;
   paidTotal: number;
+  earnedTotal: number;
+  approvedTotal: number;
+  owedTotal: number; // earned + approved (not yet paid)
 };
 
 function money(v: number, currency: string): string {
@@ -150,13 +153,12 @@ export function CommissionStatement({ model }: { model: StatementModel }) {
         </tbody>
       </table>
 
-      {/* Total */}
+      {/* Totals — earned / approved / paid / remaining owed */}
       <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 18 }}>
-        <div style={{ width: "58%", maxWidth: 340 }}>
-          <div style={{ display: "flex", justifyContent: "space-between", padding: "4px 12px", color: INK }}>
-            <span>Paid to date</span>
-            <span>{money(model.paidTotal, c)}</span>
-          </div>
+        <div style={{ width: "62%", maxWidth: 360 }}>
+          <TotalLine label="Total earned" value={money(model.earnedTotal, c)} />
+          <TotalLine label="Total approved" value={money(model.approvedTotal, c)} />
+          <TotalLine label="Total paid" value={money(model.paidTotal, c)} />
           <div style={{ height: 1, background: NAVY, margin: "8px 0" }} />
           <div
             style={{
@@ -164,8 +166,8 @@ export function CommissionStatement({ model }: { model: StatementModel }) {
               background: "#F3F6F1", borderRadius: 8, border: `1px solid #DCE6D5`,
             }}
           >
-            <span style={{ fontWeight: 700, color: NAVY }}>Period total</span>
-            <span style={{ fontWeight: 700, color: NAVY }}>{money(model.total, c)}</span>
+            <span style={{ fontWeight: 700, color: NAVY }}>Remaining owed</span>
+            <span style={{ fontWeight: 700, color: NAVY }}>{money(model.owedTotal, c)}</span>
           </div>
         </div>
       </div>
@@ -177,6 +179,14 @@ export function CommissionStatement({ model }: { model: StatementModel }) {
   );
 }
 
+function TotalLine({ label, value }: { label: string; value: string }) {
+  return (
+    <div style={{ display: "flex", justifyContent: "space-between", padding: "4px 12px", color: INK }}>
+      <span>{label}</span>
+      <span>{value}</span>
+    </div>
+  );
+}
 function Th({ children, align = "left", style }: { children?: React.ReactNode; align?: "left" | "right"; style?: React.CSSProperties }) {
   return (
     <th style={{ textAlign: align, padding: "8px 6px", fontSize: 11, letterSpacing: "0.06em", textTransform: "uppercase", color: NAVY, fontWeight: 600, ...style }}>

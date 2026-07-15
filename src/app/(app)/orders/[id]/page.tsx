@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { KpiCard } from "@/components/patterns/kpi-card";
 import { OrderStatusBadge } from "@/components/orders/status-badge";
 import { OrderActions } from "@/components/orders/order-actions";
+import { LotEditor } from "@/components/orders/lot-editor";
 import { ExpenseManager } from "@/components/orders/expense-manager";
 import { CommissionPanel } from "@/components/commissions/commission-panel";
 import { getCurrentUser } from "@/lib/auth";
@@ -112,6 +113,15 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
                               </span>
                             )}
                           </div>
+                          <LotEditor
+                            itemId={it.id}
+                            invoiceId={h.id}
+                            lotNumber={it.lot_number}
+                            manufacturingDate={it.manufacturing_date}
+                            expirationDate={it.expiration_date}
+                            retestDate={it.retest_date}
+                            canManage={!!canManage}
+                          />
                         </td>
                         <td className="py-2.5 pr-3 text-right tabular-nums">{it.quantity}</td>
                         <td className="py-2.5 pr-3 text-right tabular-nums">{formatCurrency(it.unit_price, c)}</td>

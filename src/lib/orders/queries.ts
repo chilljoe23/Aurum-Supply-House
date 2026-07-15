@@ -106,6 +106,10 @@ export type OrderItem = {
   price_source: string | null;
   price_source_sheet: string | null;
   manual_reason: string | null;
+  lot_number: string | null;
+  manufacturing_date: string | null;
+  expiration_date: string | null;
+  retest_date: string | null;
   unit_true_cost: number | null;
   line_true_cost: number | null;
   line_gross_profit: number | null;
@@ -283,6 +287,10 @@ export type EditableOrder = {
     price_overridden: boolean;
     manual_reason: string | null;
     price_source: string | null;
+    lot_number: string | null;
+    manufacturing_date: string | null;
+    expiration_date: string | null;
+    retest_date: string | null;
   }[];
 };
 
@@ -292,7 +300,7 @@ export async function getEditableOrder(id: string): Promise<EditableOrder | null
   if (!header) return null;
   const { data: items } = await supabase
     .from("v_order_items")
-    .select("product_id,quantity,unit_price,price_overridden,manual_reason,price_source")
+    .select("product_id,quantity,unit_price,price_overridden,manual_reason,price_source,lot_number,manufacturing_date,expiration_date,retest_date")
     .eq("invoice_id", id)
     .order("created_at");
   const h = header as Record<string, unknown>;
@@ -316,6 +324,10 @@ export async function getEditableOrder(id: string): Promise<EditableOrder | null
       price_overridden: !!it.price_overridden,
       manual_reason: (it.manual_reason as string | null) ?? null,
       price_source: (it.price_source as string | null) ?? null,
+      lot_number: (it.lot_number as string | null) ?? null,
+      manufacturing_date: (it.manufacturing_date as string | null) ?? null,
+      expiration_date: (it.expiration_date as string | null) ?? null,
+      retest_date: (it.retest_date as string | null) ?? null,
     })),
   };
 }
@@ -351,7 +363,7 @@ export async function getInvoiceViewModel(id: string): Promise<InvoiceViewModel 
   const [{ data: items }, settings] = await Promise.all([
     supabase
       .from("v_order_items")
-      .select("sku,product_name,strength,pack_size,quantity,unit_price,line_subtotal")
+      .select("sku,product_name,strength,pack_size,quantity,unit_price,line_subtotal,lot_number,manufacturing_date,expiration_date,retest_date")
       .eq("invoice_id", id)
       .order("created_at"),
     getInvoiceSettings(supabase),
@@ -387,6 +399,10 @@ export async function getInvoiceViewModel(id: string): Promise<InvoiceViewModel 
       quantity: Number(it.quantity ?? 0),
       unit_price: Number(it.unit_price ?? 0),
       line_subtotal: Number(it.line_subtotal ?? 0),
+      lot_number: (it.lot_number as string | null) ?? null,
+      manufacturing_date: (it.manufacturing_date as string | null) ?? null,
+      expiration_date: (it.expiration_date as string | null) ?? null,
+      retest_date: (it.retest_date as string | null) ?? null,
     })),
     settings,
   );

@@ -34,6 +34,11 @@ type Line = {
   override: boolean;
   manual_price: string;
   manual_reason: string;
+  showLot: boolean;
+  lot_number: string;
+  manufacturing_date: string;
+  expiration_date: string;
+  retest_date: string;
 };
 
 let keySeq = 0;
@@ -70,6 +75,11 @@ export function OrderBuilder({
       override: l.price_overridden,
       manual_price: l.price_overridden ? String(l.unit_price) : "",
       manual_reason: l.manual_reason ?? "",
+      showLot: !!(l.lot_number || l.expiration_date || l.manufacturing_date || l.retest_date),
+      lot_number: l.lot_number ?? "",
+      manufacturing_date: l.manufacturing_date ?? "",
+      expiration_date: l.expiration_date ?? "",
+      retest_date: l.retest_date ?? "",
     })) ?? [],
   );
 
@@ -119,7 +129,7 @@ export function OrderBuilder({
   }, [clientId, modelId]);
 
   function addLine() {
-    setLines((prev) => [...prev, { key: newKey(), product_id: "", quantity: "1", resolved: null, resolving: false, override: false, manual_price: "", manual_reason: "" }]);
+    setLines((prev) => [...prev, { key: newKey(), product_id: "", quantity: "1", resolved: null, resolving: false, override: false, manual_price: "", manual_reason: "", showLot: false, lot_number: "", manufacturing_date: "", expiration_date: "", retest_date: "" }]);
   }
   function removeLine(key: string) {
     setLines((prev) => prev.filter((l) => l.key !== key));
@@ -198,6 +208,10 @@ export function OrderBuilder({
           quantity: Number(l.quantity),
           manual_price: l.override && l.manual_price ? Number(l.manual_price) : undefined,
           manual_reason: l.override ? l.manual_reason : undefined,
+          lot_number: l.lot_number || undefined,
+          manufacturing_date: l.manufacturing_date || undefined,
+          expiration_date: l.expiration_date || undefined,
+          retest_date: l.retest_date || undefined,
         })),
     });
     setSaving(false);
@@ -344,7 +358,37 @@ export function OrderBuilder({
                           {l.override ? "Use resolved price" : "Override price"}
                         </button>
                       )}
+                      {l.product_id && (
+                        <button
+                          type="button"
+                          className="text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
+                          onClick={() => updateLine(l.key, { showLot: !l.showLot })}
+                        >
+                          {l.showLot ? "Hide lot details" : "Lot / traceability"}
+                        </button>
+                      )}
                     </div>
+
+                    {l.showLot && (
+                      <div className="mt-2 grid grid-cols-2 gap-3 sm:grid-cols-4">
+                        <div className="space-y-1.5">
+                          <Label className="text-xs">Lot number</Label>
+                          <Input value={l.lot_number} onChange={(e) => updateLine(l.key, { lot_number: e.target.value })} placeholder="Optional" />
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label className="text-xs">Mfg date</Label>
+                          <Input type="date" value={l.manufacturing_date} onChange={(e) => updateLine(l.key, { manufacturing_date: e.target.value })} />
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label className="text-xs">Expiration</Label>
+                          <Input type="date" value={l.expiration_date} onChange={(e) => updateLine(l.key, { expiration_date: e.target.value })} />
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label className="text-xs">Retest</Label>
+                          <Input type="date" value={l.retest_date} onChange={(e) => updateLine(l.key, { retest_date: e.target.value })} />
+                        </div>
+                      </div>
+                    )}
 
                     {l.override && (
                       <div className="mt-2 grid grid-cols-1 gap-3 sm:grid-cols-3">
