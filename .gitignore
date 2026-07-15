@@ -10,3 +10,6 @@ npm-debug.log*
 *.tsbuildinfo
 next-env.d.ts.timestamp
 supabase/.temp/
+
+AURUM LOGO/
+aurum_invoice 2/
