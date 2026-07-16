@@ -1,4 +1,5 @@
 import type { QuoteViewModel } from "@/lib/quotes/quote-view-model";
+import { LOGO_PUBLIC_PATH } from "@/lib/documents/branding";
 
 // ============================================================================
 // The Aurum quote document. Pure presentation of the normalized quote view model
@@ -18,7 +19,6 @@ const SAGE = "#758B6A";
 const INK = "#2B2B2B";
 const MUTED = "#6B6B63";
 const BORDER = "#E4E0D6";
-const IVORY = "#FFFCF8";
 
 function money(v: number, currency: string): string {
   return new Intl.NumberFormat("en-US", { style: "currency", currency, maximumFractionDigits: 2 }).format(v);
@@ -66,7 +66,11 @@ function AddressBlock({ heading, name, lines }: { heading: string; name?: string
   );
 }
 
-export function QuoteDocument({ model }: { model: QuoteViewModel }) {
+// `logoSrc` is the official Aurum wordmark. The browser preview uses the shipped
+// public asset; the PDF route passes a base64 data: URI of the same file so it
+// renders with no origin/network dependency. Either way the <img> keeps its
+// aspect ratio (fixed height, width:auto) — never stretched or recreated in CSS.
+export function QuoteDocument({ model, logoSrc = LOGO_PUBLIC_PATH }: { model: QuoteViewModel; logoSrc?: string }) {
   const c = model.currency;
   const showTax = model.taxAmount > 0 || model.taxRate > 0;
   const showDiscount = model.discount > 0;
@@ -110,20 +114,9 @@ export function QuoteDocument({ model }: { model: QuoteViewModel }) {
       {/* Header — brand + quote meta */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 24 }}>
         <div>
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <div
-              aria-hidden
-              style={{ width: 34, height: 34, borderRadius: 8, background: NAVY, color: IVORY, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: 18 }}
-            >
-              A
-            </div>
-            <div style={{ fontSize: 20, fontWeight: 700, color: NAVY, letterSpacing: "-0.01em", wordBreak: "break-word" }}>{model.company.name}</div>
-          </div>
-          <div style={{ marginTop: 10, color: MUTED, fontSize: 12 }}>
-            {model.company.lines.map((l, i) => <div key={i}>{l}</div>)}
-            {model.company.email && <div>{model.company.email}</div>}
-            {model.company.phone && <div>{model.company.phone}</div>}
-          </div>
+          {/* eslint-disable-next-line @next/next/no-img-element -- fixed-size brand asset; also rendered by the headless-Chromium PDF route where next/image is unavailable */}
+          <img src={logoSrc} alt={model.company.name} style={{ height: 44, width: "auto", display: "block" }} />
+          <div style={{ marginTop: 8, color: MUTED, fontSize: 12 }}>{model.company.location}</div>
         </div>
         <div style={{ textAlign: "right" }}>
           <div style={{ fontSize: 24, fontWeight: 700, color: NAVY, letterSpacing: "0.02em" }}>QUOTE</div>
@@ -166,7 +159,7 @@ export function QuoteDocument({ model }: { model: QuoteViewModel }) {
         </thead>
         <tbody>
           {model.lines.map((l, i) => (
-            <tr key={i} style={{ borderBottom: `1px solid ${BORDER}` }}>
+            <tr key={i} style={{ borderBottom: `1px solid ${BORDER}`, breakInside: "avoid", pageBreakInside: "avoid" }}>
               <Td style={{ fontFamily: "var(--font-geist-mono), ui-monospace, monospace", fontSize: 12, wordBreak: "break-word" }}>{l.sku}</Td>
               <Td style={{ wordBreak: "break-word" }}>{l.description}</Td>
               <Td align="right">{qty(l.quantity)}</Td>
@@ -182,9 +175,9 @@ export function QuoteDocument({ model }: { model: QuoteViewModel }) {
         </tbody>
       </table>
 
-      {/* Totals */}
+      {/* Totals — kept together, never split across a page break */}
       <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 18 }}>
-        <div style={{ width: "58%", maxWidth: 340 }}>
+        <div data-keep-together style={{ width: "58%", maxWidth: 340, breakInside: "avoid", pageBreakInside: "avoid" }}>
           <TotalRow label="Subtotal" value={money(model.subtotal, c)} />
           {showDiscount && <TotalRow label="Discount" value={`(${money(model.discount, c)})`} />}
           {showShipping && <TotalRow label="Shipping" value={money(model.shipping, c)} />}
@@ -205,32 +198,34 @@ export function QuoteDocument({ model }: { model: QuoteViewModel }) {
 
       {/* Notes */}
       {model.notes && (
-        <div style={{ marginTop: 28 }}>
+        <div data-keep-together style={{ marginTop: 28, breakInside: "avoid", pageBreakInside: "avoid" }}>
           <Panel heading="Notes & terms">
             <div style={{ whiteSpace: "pre-wrap" }}>{model.notes}</div>
           </Panel>
         </div>
       )}
 
-      {/* Customer acceptance area */}
+      {/* Customer acceptance area — kept together, never split across a page break */}
       {model.showAcceptance && (
-        <div style={{ marginTop: 28, border: `1px solid ${BORDER}`, borderRadius: 8, padding: "16px 18px", background: "#FBFAF6" }}>
+        <div data-keep-together style={{ marginTop: 28, border: `1px solid ${BORDER}`, borderRadius: 8, padding: "16px 18px", background: "#FBFAF6", breakInside: "avoid", pageBreakInside: "avoid" }}>
           <div style={{ fontSize: 11, letterSpacing: "0.1em", textTransform: "uppercase", color: SAGE, fontWeight: 600, marginBottom: 12 }}>
             Acceptance
           </div>
           <div style={{ fontSize: 12.5, color: MUTED, marginBottom: 18 }}>
-            To accept this quote, sign below and return it{model.expirationDate ? ` on or before ${fmtDate(model.expirationDate)}` : ""}.
+            Accepted by — sign below and return this quote{model.expirationDate ? ` on or before ${fmtDate(model.expirationDate)}` : ""}.
           </div>
-          <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: 28 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: 28, rowGap: 22 }}>
             <SignLine label="Authorized signature" />
             <SignLine label="Date" />
+            <SignLine label="Printed name" />
+            <SignLine label="Title" />
           </div>
         </div>
       )}
 
-      {/* Footer */}
-      <div style={{ marginTop: 32, paddingTop: 14, borderTop: `1px solid ${BORDER}`, textAlign: "center", color: MUTED, fontSize: 12 }}>
-        {model.footer || `This is a quotation, not an invoice. Prices are valid until the date shown. Thank you — ${model.company.name}.`}
+      {/* Footer — configured quote footer, else the official quote closing line */}
+      <div data-keep-together style={{ marginTop: 32, paddingTop: 14, borderTop: `1px solid ${BORDER}`, textAlign: "center", color: MUTED, fontSize: 12, breakInside: "avoid", pageBreakInside: "avoid" }}>
+        {model.footer || `Thank you for the opportunity to serve you — ${model.company.name}.`}
       </div>
     </div>
   );

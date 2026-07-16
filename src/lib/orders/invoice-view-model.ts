@@ -8,6 +8,8 @@
 // Anything not on this type cannot leak onto a customer document.
 // ============================================================================
 
+import { COMPANY_NAME, COMPANY_LOCATION } from "@/lib/documents/branding";
+
 export type InvoiceViewAddress = { name?: string | null; lines: string[] };
 
 export type InvoiceViewLine = {
@@ -24,7 +26,10 @@ export type InvoiceViewLine = {
 };
 
 export type InvoiceViewModel = {
-  company: { name: string; lines: string[]; email: string | null; phone: string | null; logoPath: string | null };
+  // Fixed company identity: name + location ONLY (no street/phone/email/website).
+  // logoPath is an optional Settings override; documents default to the shipped
+  // official wordmark asset.
+  company: { name: string; location: string; logoPath: string | null };
   invoiceNumber: string;
   status: string;
   isVoid: boolean;
@@ -137,10 +142,8 @@ export function buildInvoiceViewModel(
 
   return {
     company: {
-      name: settings.company_name,
-      lines: addressLines(settings.address),
-      email: settings.contact_email,
-      phone: settings.contact_phone,
+      name: settings.company_name || COMPANY_NAME,
+      location: COMPANY_LOCATION,
       logoPath: settings.logo_path,
     },
     invoiceNumber: header.invoice_number,

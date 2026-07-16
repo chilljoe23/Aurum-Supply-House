@@ -9,6 +9,8 @@
 // customer document.
 // ============================================================================
 
+import { COMPANY_NAME, COMPANY_LOCATION } from "@/lib/documents/branding";
+
 export type QuoteViewAddress = { name?: string | null; lines: string[] };
 
 export type QuoteViewLine = {
@@ -20,7 +22,10 @@ export type QuoteViewLine = {
 };
 
 export type QuoteViewModel = {
-  company: { name: string; lines: string[]; email: string | null; phone: string | null; logoPath: string | null };
+  // Fixed company identity: name + location ONLY (no street/phone/email/website).
+  // logoPath is an optional Settings override; documents default to the shipped
+  // official wordmark asset.
+  company: { name: string; location: string; logoPath: string | null };
   quoteNumber: string;
   status: string;
   statusLabel: string;
@@ -137,10 +142,8 @@ export function buildQuoteViewModel(
 
   return {
     company: {
-      name: settings.company_name,
-      lines: addressLines(settings.address),
-      email: settings.contact_email,
-      phone: settings.contact_phone,
+      name: settings.company_name || COMPANY_NAME,
+      location: COMPANY_LOCATION,
       logoPath: settings.logo_path,
     },
     quoteNumber: header.quote_number,

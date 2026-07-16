@@ -1,4 +1,5 @@
 import type { InvoiceViewModel } from "@/lib/orders/invoice-view-model";
+import { LOGO_PUBLIC_PATH } from "@/lib/documents/branding";
 
 // ============================================================================
 // The Aurum invoice document. Pure presentation of the normalized view model —
@@ -18,7 +19,6 @@ const SAGE = "#758B6A";
 const INK = "#2B2B2B";
 const MUTED = "#6B6B63";
 const BORDER = "#E4E0D6";
-const IVORY = "#FFFCF8";
 
 function money(v: number, currency: string): string {
   return new Intl.NumberFormat("en-US", { style: "currency", currency, maximumFractionDigits: 2 }).format(v);
@@ -68,7 +68,11 @@ function AddressBlock({ heading, name, lines }: { heading: string; name?: string
   );
 }
 
-export function InvoiceDocument({ model }: { model: InvoiceViewModel }) {
+// `logoSrc` is the official Aurum wordmark. The browser preview uses the shipped
+// public asset; the PDF route passes a base64 data: URI of the same file so it
+// renders with no origin/network dependency. Either way the <img> keeps its
+// aspect ratio (fixed height, width:auto) — never stretched or recreated in CSS.
+export function InvoiceDocument({ model, logoSrc = LOGO_PUBLIC_PATH }: { model: InvoiceViewModel; logoSrc?: string }) {
   const c = model.currency;
   const showTax = model.taxAmount > 0 || model.taxRate > 0;
   const showDiscount = model.discount > 0;
@@ -107,20 +111,9 @@ export function InvoiceDocument({ model }: { model: InvoiceViewModel }) {
       {/* Header — brand + invoice meta */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 24 }}>
         <div>
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <div
-              aria-hidden
-              style={{ width: 34, height: 34, borderRadius: 8, background: NAVY, color: IVORY, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: 18 }}
-            >
-              A
-            </div>
-            <div style={{ fontSize: 20, fontWeight: 700, color: NAVY, letterSpacing: "-0.01em" }}>{model.company.name}</div>
-          </div>
-          <div style={{ marginTop: 10, color: MUTED, fontSize: 12 }}>
-            {model.company.lines.map((l, i) => <div key={i}>{l}</div>)}
-            {model.company.email && <div>{model.company.email}</div>}
-            {model.company.phone && <div>{model.company.phone}</div>}
-          </div>
+          {/* eslint-disable-next-line @next/next/no-img-element -- fixed-size brand asset; also rendered by the headless-Chromium PDF route where next/image is unavailable */}
+          <img src={logoSrc} alt={model.company.name} style={{ height: 44, width: "auto", display: "block" }} />
+          <div style={{ marginTop: 8, color: MUTED, fontSize: 12 }}>{model.company.location}</div>
         </div>
         <div style={{ textAlign: "right" }}>
           <div style={{ fontSize: 24, fontWeight: 700, color: NAVY, letterSpacing: "0.02em" }}>INVOICE</div>
@@ -151,7 +144,8 @@ export function InvoiceDocument({ model }: { model: InvoiceViewModel }) {
 
       {/* Line items */}
       <table style={{ width: "100%", borderCollapse: "collapse", marginTop: 4 }}>
-        <thead>
+        {/* thead repeats on every printed/PDF page so continuation pages keep column headings */}
+        <thead style={{ display: "table-header-group" }}>
           <tr style={{ borderBottom: `2px solid ${NAVY}` }}>
             <Th style={{ width: "16%" }}>SKU</Th>
             <Th>Description</Th>
@@ -162,7 +156,7 @@ export function InvoiceDocument({ model }: { model: InvoiceViewModel }) {
         </thead>
         <tbody>
           {model.lines.map((l, i) => (
-            <tr key={i} style={{ borderBottom: `1px solid ${BORDER}` }}>
+            <tr key={i} style={{ borderBottom: `1px solid ${BORDER}`, breakInside: "avoid", pageBreakInside: "avoid" }}>
               <Td style={{ fontFamily: "var(--font-geist-mono), ui-monospace, monospace", fontSize: 12 }}>{l.sku}</Td>
               <Td>
                 {l.description}
@@ -187,9 +181,9 @@ export function InvoiceDocument({ model }: { model: InvoiceViewModel }) {
         </tbody>
       </table>
 
-      {/* Totals */}
+      {/* Totals — kept together, never split across a page break */}
       <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 18 }}>
-        <div style={{ width: "58%", maxWidth: 340 }}>
+        <div data-keep-together style={{ width: "58%", maxWidth: 340, breakInside: "avoid", pageBreakInside: "avoid" }}>
           <TotalRow label="Subtotal" value={money(model.subtotal, c)} />
           {showDiscount && <TotalRow label="Discount" value={`(${money(model.discount, c)})`} />}
           {showShipping && <TotalRow label="Shipping" value={money(model.shipping, c)} />}
@@ -211,8 +205,8 @@ export function InvoiceDocument({ model }: { model: InvoiceViewModel }) {
         </div>
       </div>
 
-      {/* Payment instructions + notes */}
-      <div style={{ marginTop: 28, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 28 }}>
+      {/* Payment instructions + notes — each block kept intact across pages */}
+      <div data-keep-together style={{ marginTop: 28, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 28, breakInside: "avoid", pageBreakInside: "avoid" }}>
         {(model.paymentInstructions || model.remittanceDetails) && (
           <Panel heading="Payment instructions">
             {model.paymentInstructions && <div style={{ whiteSpace: "pre-wrap" }}>{model.paymentInstructions}</div>}
@@ -227,7 +221,7 @@ export function InvoiceDocument({ model }: { model: InvoiceViewModel }) {
       </div>
 
       {/* Footer */}
-      <div style={{ marginTop: 32, paddingTop: 14, borderTop: `1px solid ${BORDER}`, textAlign: "center", color: MUTED, fontSize: 12 }}>
+      <div data-keep-together style={{ marginTop: 32, paddingTop: 14, borderTop: `1px solid ${BORDER}`, textAlign: "center", color: MUTED, fontSize: 12, breakInside: "avoid", pageBreakInside: "avoid" }}>
         {model.footer || `Thank you for your business — ${model.company.name}.`}
       </div>
     </div>

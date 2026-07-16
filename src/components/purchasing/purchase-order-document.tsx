@@ -1,4 +1,5 @@
 import type { PurchaseOrderViewModel } from "@/lib/purchase-orders/purchase-order-document";
+import { LOGO_PUBLIC_PATH } from "@/lib/documents/branding";
 
 // ============================================================================
 // The Aurum PURCHASE ORDER document. Shares the approved invoice's visual system
@@ -19,7 +20,6 @@ const SAGE = "#758B6A";
 const INK = "#2B2B2B";
 const MUTED = "#6B6B63";
 const BORDER = "#E4E0D6";
-const IVORY = "#FFFCF8";
 
 function money(v: number, currency: string): string {
   return new Intl.NumberFormat("en-US", { style: "currency", currency, maximumFractionDigits: 2 }).format(v);
@@ -77,7 +77,11 @@ function AddressBlock({ heading, name, lines }: { heading: string; name?: string
   );
 }
 
-export function PurchaseOrderDocument({ model }: { model: PurchaseOrderViewModel }) {
+// `logoSrc` is the official Aurum wordmark. The browser preview uses the shipped
+// public asset; the PDF route passes a base64 data: URI of the same file so it
+// renders with no origin/network dependency. Either way the <img> keeps its
+// aspect ratio (fixed height, width:auto) — never stretched or recreated in CSS.
+export function PurchaseOrderDocument({ model, logoSrc = LOGO_PUBLIC_PATH }: { model: PurchaseOrderViewModel; logoSrc?: string }) {
   const c = model.currency;
   const showShipping = model.shipping > 0;
   const showFees = model.fees > 0;
@@ -110,20 +114,9 @@ export function PurchaseOrderDocument({ model }: { model: PurchaseOrderViewModel
       {/* Header — brand + PO meta */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 24 }}>
         <div>
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <div
-              aria-hidden
-              style={{ width: 34, height: 34, borderRadius: 8, background: NAVY, color: IVORY, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: 18 }}
-            >
-              A
-            </div>
-            <div style={{ fontSize: 20, fontWeight: 700, color: NAVY, letterSpacing: "-0.01em" }}>{model.company.name}</div>
-          </div>
-          <div style={{ marginTop: 10, color: MUTED, fontSize: 12 }}>
-            {model.company.lines.map((l, i) => <div key={i}>{l}</div>)}
-            {model.company.email && <div>{model.company.email}</div>}
-            {model.company.phone && <div>{model.company.phone}</div>}
-          </div>
+          {/* eslint-disable-next-line @next/next/no-img-element -- fixed-size brand asset; also rendered by the headless-Chromium PDF route where next/image is unavailable */}
+          <img src={logoSrc} alt={model.company.name} style={{ height: 44, width: "auto", display: "block" }} />
+          <div style={{ marginTop: 8, color: MUTED, fontSize: 12 }}>{model.company.location}</div>
         </div>
         <div style={{ textAlign: "right" }}>
           <div style={{ fontSize: 24, fontWeight: 700, color: NAVY, letterSpacing: "0.02em" }}>PURCHASE ORDER</div>

@@ -8,6 +8,8 @@
 // pays the manufacturer) IS appropriate on a PO and is the only price shown.
 // ============================================================================
 
+import { COMPANY_NAME, COMPANY_LOCATION } from "@/lib/documents/branding";
+
 export type PoViewAddress = { name?: string | null; lines: string[] };
 
 export type PoViewLine = {
@@ -20,7 +22,10 @@ export type PoViewLine = {
 };
 
 export type PurchaseOrderViewModel = {
-  company: { name: string; lines: string[]; email: string | null; phone: string | null };
+  // Fixed company identity: name + location ONLY — the same official Aurum
+  // identity the approved invoice/quote documents use (no street/phone/email in
+  // the masthead). The vendor still receives Aurum's full address via `shipTo`.
+  company: { name: string; location: string };
   poNumber: string;
   status: string;
   isVoid: boolean;
@@ -109,10 +114,8 @@ export function buildPurchaseOrderViewModel(
 
   return {
     company: {
-      name: settings.company_name,
-      lines: addressLines(settings.address),
-      email: settings.contact_email,
-      phone: settings.contact_phone,
+      name: settings.company_name || COMPANY_NAME,
+      location: COMPANY_LOCATION,
     },
     poNumber: header.po_number,
     status: header.status,

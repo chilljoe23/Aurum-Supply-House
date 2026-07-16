@@ -4,7 +4,8 @@ import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { getQuoteViewModel } from "@/lib/quotes/queries";
 import { QuoteDocument } from "@/components/quotes/quote-document";
-import { PrintButton } from "@/components/orders/print-button";
+import { DocumentDownload } from "@/components/documents/document-download";
+import { documentPdfFilename } from "@/lib/documents/branding";
 
 export const metadata: Metadata = { title: "Quote" };
 export const dynamic = "force-dynamic";
@@ -35,7 +36,10 @@ export default async function QuoteDocumentPage({ params }: { params: Promise<{ 
         <Link href={`/quotes/${id}`} className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
           <ArrowLeft className="h-4 w-4" /> Back to quote
         </Link>
-        <PrintButton label={model.isDraft ? "Print / Save PDF" : "Download PDF"} />
+        <DocumentDownload
+          pdfHref={`/quotes/${id}/document/pdf`}
+          filename={documentPdfFilename("Quote", model.quoteNumber)}
+        />
       </div>
 
       <div className="overflow-x-auto rounded-lg border border-border bg-muted/30 p-4 print:border-0 print:bg-transparent print:p-0">

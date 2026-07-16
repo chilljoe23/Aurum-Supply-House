@@ -5,7 +5,8 @@ import { ArrowLeft } from "lucide-react";
 import { getCurrentUser } from "@/lib/auth";
 import { getPurchaseOrderViewModel } from "@/lib/purchase-orders/queries";
 import { PurchaseOrderDocument } from "@/components/purchasing/purchase-order-document";
-import { PrintButton } from "@/components/orders/print-button";
+import { DocumentDownload } from "@/components/documents/document-download";
+import { documentPdfFilename } from "@/lib/documents/branding";
 import { RestrictedNotice } from "@/components/purchasing/restricted-notice";
 
 export const metadata: Metadata = { title: "Purchase order" };
@@ -40,7 +41,10 @@ export default async function PurchaseOrderDocumentPage({ params }: { params: Pr
         <Link href={`/purchasing/${id}`} className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
           <ArrowLeft className="h-4 w-4" /> Back to purchase order
         </Link>
-        <PrintButton />
+        <DocumentDownload
+          pdfHref={`/purchasing/${id}/document/pdf`}
+          filename={documentPdfFilename("Purchase-Order", model.poNumber)}
+        />
       </div>
 
       <div className="overflow-x-auto rounded-lg border border-border bg-muted/30 p-4 print:border-0 print:bg-transparent print:p-0">

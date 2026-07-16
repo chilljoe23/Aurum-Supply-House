@@ -4,7 +4,8 @@ import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { getInvoiceViewModel } from "@/lib/orders/queries";
 import { InvoiceDocument } from "@/components/orders/invoice-document";
-import { PrintButton } from "@/components/orders/print-button";
+import { DocumentDownload } from "@/components/documents/document-download";
+import { documentPdfFilename } from "@/lib/documents/branding";
 
 export const metadata: Metadata = { title: "Invoice" };
 export const dynamic = "force-dynamic";
@@ -35,7 +36,10 @@ export default async function InvoicePreviewPage({ params }: { params: Promise<{
         <Link href={`/orders/${id}`} className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
           <ArrowLeft className="h-4 w-4" /> Back to order
         </Link>
-        <PrintButton />
+        <DocumentDownload
+          pdfHref={`/orders/${id}/invoice/pdf`}
+          filename={documentPdfFilename("Invoice", model.invoiceNumber)}
+        />
       </div>
 
       <div className="overflow-x-auto rounded-lg border border-border bg-muted/30 p-4 print:border-0 print:bg-transparent print:p-0">
