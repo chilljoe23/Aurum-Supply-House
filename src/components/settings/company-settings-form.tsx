@@ -32,6 +32,10 @@ export function CompanySettingsForm({ settings, readOnly }: { settings: CompanyS
     remittance_details: settings.remittance_details ?? "",
     invoice_terms: settings.invoice_terms ?? "",
     invoice_footer: settings.invoice_footer ?? "",
+    quote_number_prefix: settings.quote_number_prefix,
+    quote_expiration_days: String(settings.quote_expiration_days),
+    quote_terms: settings.quote_terms ?? "",
+    quote_footer: settings.quote_footer ?? "",
   });
   const [saving, setSaving] = React.useState(false);
   const [saved, setSaved] = React.useState(false);
@@ -126,6 +130,28 @@ export function CompanySettingsForm({ settings, readOnly }: { settings: CompanyS
           </FieldFull>
           <FieldFull label="Invoice footer">
             <Input value={form.invoice_footer} onChange={set("invoice_footer")} disabled={readOnly} placeholder="Thank-you line or contact." />
+          </FieldFull>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Quote defaults</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+            <Field label="Quote number prefix" hint="e.g. QTE → QTE-1001">
+              <Input value={form.quote_number_prefix} onChange={set("quote_number_prefix")} disabled={readOnly} />
+            </Field>
+            <Field label="Default validity (days)" hint="0 = no default expiry">
+              <Input type="number" min={0} step={1} value={form.quote_expiration_days} onChange={set("quote_expiration_days")} disabled={readOnly} />
+            </Field>
+          </div>
+          <FieldFull label="Default quote notes / terms">
+            <Textarea rows={2} value={form.quote_terms} onChange={set("quote_terms")} disabled={readOnly} placeholder="Standard terms shown when a quote has no specific notes." />
+          </FieldFull>
+          <FieldFull label="Quote footer / disclaimer">
+            <Input value={form.quote_footer} onChange={set("quote_footer")} disabled={readOnly} placeholder="e.g. This quotation is valid until the date shown and is not an invoice." />
           </FieldFull>
         </CardContent>
       </Card>

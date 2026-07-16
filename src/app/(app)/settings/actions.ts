@@ -2,7 +2,10 @@
 
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
-import { createClient as createServerClient } from "@/lib/supabase/server";
+// The quote-* columns on app_settings are not yet in the generated types (added
+// by migration 0380; committed types regenerate post-migration), so the update
+// goes through the loosely-typed client.
+import { createUntypedClient as createServerClient } from "@/lib/supabase/untyped";
 import { getCurrentUser } from "@/lib/auth";
 
 export type Result = { ok: true } | { ok: false; error: string; fieldErrors?: Record<string, string[]> };
@@ -26,6 +29,10 @@ const settingsSchema = z.object({
   remittance_details: opt,
   invoice_terms: opt,
   invoice_footer: opt,
+  quote_number_prefix: z.string().trim().min(1).max(10).regex(/^[A-Za-z0-9-]+$/, "Letters, numbers, and dashes only"),
+  quote_expiration_days: z.coerce.number().int("Whole days only").min(0).max(365),
+  quote_terms: opt,
+  quote_footer: opt,
 });
 
 export async function updateCompanySettings(raw: unknown): Promise<Result> {
@@ -63,6 +70,10 @@ export async function updateCompanySettings(raw: unknown): Promise<Result> {
       remittance_details: s.remittance_details ?? null,
       invoice_terms: s.invoice_terms ?? null,
       invoice_footer: s.invoice_footer ?? null,
+      quote_number_prefix: s.quote_number_prefix,
+      quote_expiration_days: s.quote_expiration_days,
+      quote_terms: s.quote_terms ?? null,
+      quote_footer: s.quote_footer ?? null,
     })
     .eq("id", true);
 

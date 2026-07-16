@@ -1,5 +1,6 @@
 import "server-only";
 import { createClient } from "@/lib/supabase/server";
+import { createUntypedClient } from "@/lib/supabase/untyped";
 
 // ---- Types ------------------------------------------------------------------
 
@@ -258,6 +259,43 @@ export async function getClientProducts(clientId: string): Promise<ClientProduct
     agg.set(key, cur);
   }
   return Array.from(agg.values()).sort((a, b) => b.revenue - a.revenue);
+}
+
+export type ClientQuoteRow = {
+  id: string;
+  quote_number: string;
+  status: string;
+  is_expired: boolean;
+  total: number;
+  currency: string;
+  quote_date: string | null;
+  expiration_date: string | null;
+  converted_order_id: string | null;
+  converted_order_number: string | null;
+};
+
+// Quote history for a client. Reads the row-scoped v_quotes view (reps see only
+// their own book), so scoping is enforced at the DB layer. No cost columns exist.
+export async function getClientQuotes(clientId: string): Promise<ClientQuoteRow[]> {
+  const supabase = await createUntypedClient();
+  const { data } = await supabase
+    .from("v_quotes")
+    .select("id,quote_number,status,is_expired,total,currency,quote_date,expiration_date,converted_order_id,converted_order_number")
+    .eq("client_id", clientId)
+    .order("created_at", { ascending: false })
+    .limit(100);
+  return ((data ?? []) as Record<string, unknown>[]).map((r) => ({
+    id: r.id as string,
+    quote_number: r.quote_number as string,
+    status: r.status as string,
+    is_expired: !!r.is_expired,
+    total: Number(r.total ?? 0),
+    currency: (r.currency as string) ?? "USD",
+    quote_date: (r.quote_date as string | null) ?? null,
+    expiration_date: (r.expiration_date as string | null) ?? null,
+    converted_order_id: (r.converted_order_id as string | null) ?? null,
+    converted_order_number: (r.converted_order_number as string | null) ?? null,
+  }));
 }
 
 export type TimelineRow = {

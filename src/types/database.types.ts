@@ -79,6 +79,10 @@ export type Database = {
           logo_path: string | null
           payment_instructions: string | null
           po_prefix: string
+          quote_expiration_days: number
+          quote_footer: string | null
+          quote_number_prefix: string
+          quote_terms: string | null
           remittance_details: string | null
           updated_at: string
         }
@@ -98,6 +102,10 @@ export type Database = {
           logo_path?: string | null
           payment_instructions?: string | null
           po_prefix?: string
+          quote_expiration_days?: number
+          quote_footer?: string | null
+          quote_number_prefix?: string
+          quote_terms?: string | null
           remittance_details?: string | null
           updated_at?: string
         }
@@ -117,6 +125,10 @@ export type Database = {
           logo_path?: string | null
           payment_instructions?: string | null
           po_prefix?: string
+          quote_expiration_days?: number
+          quote_footer?: string | null
+          quote_number_prefix?: string
+          quote_terms?: string | null
           remittance_details?: string | null
           updated_at?: string
         }
@@ -970,6 +982,8 @@ export type Database = {
           sales_rep_name: string | null
           sent_at: string | null
           shipping: number
+          source_quote_id: string | null
+          source_quote_number: string | null
           stage: Database["public"]["Enums"]["order_stage"] | null
           status: Database["public"]["Enums"]["invoice_status"]
           subtotal: number
@@ -1008,6 +1022,8 @@ export type Database = {
           sales_rep_name?: string | null
           sent_at?: string | null
           shipping?: number
+          source_quote_id?: string | null
+          source_quote_number?: string | null
           stage?: Database["public"]["Enums"]["order_stage"] | null
           status?: Database["public"]["Enums"]["invoice_status"]
           subtotal?: number
@@ -1046,6 +1062,8 @@ export type Database = {
           sales_rep_name?: string | null
           sent_at?: string | null
           shipping?: number
+          source_quote_id?: string | null
+          source_quote_number?: string | null
           stage?: Database["public"]["Enums"]["order_stage"] | null
           status?: Database["public"]["Enums"]["invoice_status"]
           subtotal?: number
@@ -1106,6 +1124,20 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "v_profit_by_rep"
             referencedColumns: ["rep_id"]
+          },
+          {
+            foreignKeyName: "invoices_source_quote_id_fkey"
+            columns: ["source_quote_id"]
+            isOneToOne: false
+            referencedRelation: "quotes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoices_source_quote_id_fkey"
+            columns: ["source_quote_id"]
+            isOneToOne: false
+            referencedRelation: "v_quotes"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -2965,6 +2997,340 @@ export type Database = {
           },
         ]
       }
+      quote_items: {
+        Row: {
+          created_at: string
+          currency: string
+          id: string
+          manual_reason: string | null
+          manufacturer_name: string | null
+          original_unit_price: number | null
+          pack_size: string | null
+          price_overridden: boolean
+          price_source: string | null
+          price_source_sheet: string | null
+          product_id: string | null
+          product_name: string
+          quantity: number
+          quote_id: string
+          sku: string
+          strength: string | null
+          unit_price: number
+        }
+        Insert: {
+          created_at?: string
+          currency?: string
+          id?: string
+          manual_reason?: string | null
+          manufacturer_name?: string | null
+          original_unit_price?: number | null
+          pack_size?: string | null
+          price_overridden?: boolean
+          price_source?: string | null
+          price_source_sheet?: string | null
+          product_id?: string | null
+          product_name: string
+          quantity: number
+          quote_id: string
+          sku: string
+          strength?: string | null
+          unit_price: number
+        }
+        Update: {
+          created_at?: string
+          currency?: string
+          id?: string
+          manual_reason?: string | null
+          manufacturer_name?: string | null
+          original_unit_price?: number | null
+          pack_size?: string | null
+          price_overridden?: boolean
+          price_source?: string | null
+          price_source_sheet?: string | null
+          product_id?: string | null
+          product_name?: string
+          quantity?: number
+          quote_id?: string
+          sku?: string
+          strength?: string | null
+          unit_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quote_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "catalog_products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quote_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quote_items_quote_id_fkey"
+            columns: ["quote_id"]
+            isOneToOne: false
+            referencedRelation: "quotes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quote_items_quote_id_fkey"
+            columns: ["quote_id"]
+            isOneToOne: false
+            referencedRelation: "v_quotes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      quote_status_history: {
+        Row: {
+          changed_by: string | null
+          created_at: string
+          from_status: Database["public"]["Enums"]["quote_status"] | null
+          id: string
+          note: string | null
+          quote_id: string
+          to_status: Database["public"]["Enums"]["quote_status"]
+        }
+        Insert: {
+          changed_by?: string | null
+          created_at?: string
+          from_status?: Database["public"]["Enums"]["quote_status"] | null
+          id?: string
+          note?: string | null
+          quote_id: string
+          to_status: Database["public"]["Enums"]["quote_status"]
+        }
+        Update: {
+          changed_by?: string | null
+          created_at?: string
+          from_status?: Database["public"]["Enums"]["quote_status"] | null
+          id?: string
+          note?: string | null
+          quote_id?: string
+          to_status?: Database["public"]["Enums"]["quote_status"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quote_status_history_changed_by_fkey"
+            columns: ["changed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quote_status_history_changed_by_fkey"
+            columns: ["changed_by"]
+            isOneToOne: false
+            referencedRelation: "v_profit_by_rep"
+            referencedColumns: ["rep_id"]
+          },
+          {
+            foreignKeyName: "quote_status_history_quote_id_fkey"
+            columns: ["quote_id"]
+            isOneToOne: false
+            referencedRelation: "quotes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quote_status_history_quote_id_fkey"
+            columns: ["quote_id"]
+            isOneToOne: false
+            referencedRelation: "v_quotes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      quotes: {
+        Row: {
+          accepted_at: string | null
+          client_id: string | null
+          client_snapshot: Json
+          converted_at: string | null
+          converted_order_id: string | null
+          created_at: string
+          created_by: string | null
+          currency: string
+          customer_reference: string | null
+          declined_at: string | null
+          discount: number
+          expiration_date: string | null
+          expired_at: string | null
+          fees: number
+          id: string
+          notes: string | null
+          payment_terms: Database["public"]["Enums"]["payment_terms"]
+          pdf_path: string | null
+          pricing_sheet_id: string | null
+          pricing_sheet_name: string | null
+          quote_date: string
+          quote_number: string
+          sales_rep_id: string | null
+          sales_rep_name: string | null
+          sent_at: string | null
+          shipping: number
+          status: Database["public"]["Enums"]["quote_status"]
+          subtotal: number
+          tax_amount: number
+          tax_rate: number
+          total: number
+          updated_at: string
+          voided_at: string | null
+        }
+        Insert: {
+          accepted_at?: string | null
+          client_id?: string | null
+          client_snapshot?: Json
+          converted_at?: string | null
+          converted_order_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          customer_reference?: string | null
+          declined_at?: string | null
+          discount?: number
+          expiration_date?: string | null
+          expired_at?: string | null
+          fees?: number
+          id?: string
+          notes?: string | null
+          payment_terms?: Database["public"]["Enums"]["payment_terms"]
+          pdf_path?: string | null
+          pricing_sheet_id?: string | null
+          pricing_sheet_name?: string | null
+          quote_date?: string
+          quote_number: string
+          sales_rep_id?: string | null
+          sales_rep_name?: string | null
+          sent_at?: string | null
+          shipping?: number
+          status?: Database["public"]["Enums"]["quote_status"]
+          subtotal?: number
+          tax_amount?: number
+          tax_rate?: number
+          total?: number
+          updated_at?: string
+          voided_at?: string | null
+        }
+        Update: {
+          accepted_at?: string | null
+          client_id?: string | null
+          client_snapshot?: Json
+          converted_at?: string | null
+          converted_order_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          customer_reference?: string | null
+          declined_at?: string | null
+          discount?: number
+          expiration_date?: string | null
+          expired_at?: string | null
+          fees?: number
+          id?: string
+          notes?: string | null
+          payment_terms?: Database["public"]["Enums"]["payment_terms"]
+          pdf_path?: string | null
+          pricing_sheet_id?: string | null
+          pricing_sheet_name?: string | null
+          quote_date?: string
+          quote_number?: string
+          sales_rep_id?: string | null
+          sales_rep_name?: string | null
+          sent_at?: string | null
+          shipping?: number
+          status?: Database["public"]["Enums"]["quote_status"]
+          subtotal?: number
+          tax_amount?: number
+          tax_rate?: number
+          total?: number
+          updated_at?: string
+          voided_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quotes_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quotes_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "v_profit_by_client"
+            referencedColumns: ["client_id"]
+          },
+          {
+            foreignKeyName: "quotes_converted_order_id_fkey"
+            columns: ["converted_order_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quotes_converted_order_id_fkey"
+            columns: ["converted_order_id"]
+            isOneToOne: false
+            referencedRelation: "v_ar_aging"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quotes_converted_order_id_fkey"
+            columns: ["converted_order_id"]
+            isOneToOne: false
+            referencedRelation: "v_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quotes_converted_order_id_fkey"
+            columns: ["converted_order_id"]
+            isOneToOne: false
+            referencedRelation: "v_outstanding_invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quotes_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quotes_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "v_profit_by_rep"
+            referencedColumns: ["rep_id"]
+          },
+          {
+            foreignKeyName: "quotes_pricing_sheet_id_fkey"
+            columns: ["pricing_sheet_id"]
+            isOneToOne: false
+            referencedRelation: "pricing_sheets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quotes_sales_rep_id_fkey"
+            columns: ["sales_rep_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quotes_sales_rep_id_fkey"
+            columns: ["sales_rep_id"]
+            isOneToOne: false
+            referencedRelation: "v_profit_by_rep"
+            referencedColumns: ["rep_id"]
+          },
+        ]
+      }
     }
     Views: {
       catalog_products: {
@@ -3986,6 +4352,205 @@ export type Database = {
         }
         Relationships: []
       }
+      v_quote_items: {
+        Row: {
+          created_at: string | null
+          currency: string | null
+          description: string | null
+          id: string | null
+          line_subtotal: number | null
+          manual_reason: string | null
+          manufacturer_name: string | null
+          original_unit_price: number | null
+          pack_size: string | null
+          price_overridden: boolean | null
+          price_source: string | null
+          price_source_sheet: string | null
+          product_id: string | null
+          product_name: string | null
+          quantity: number | null
+          quote_id: string | null
+          sku: string | null
+          strength: string | null
+          unit_price: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          currency?: string | null
+          description?: never
+          id?: string | null
+          line_subtotal?: never
+          manual_reason?: string | null
+          manufacturer_name?: string | null
+          original_unit_price?: number | null
+          pack_size?: string | null
+          price_overridden?: boolean | null
+          price_source?: string | null
+          price_source_sheet?: string | null
+          product_id?: string | null
+          product_name?: string | null
+          quantity?: number | null
+          quote_id?: string | null
+          sku?: string | null
+          strength?: string | null
+          unit_price?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          currency?: string | null
+          description?: never
+          id?: string | null
+          line_subtotal?: never
+          manual_reason?: string | null
+          manufacturer_name?: string | null
+          original_unit_price?: number | null
+          pack_size?: string | null
+          price_overridden?: boolean | null
+          price_source?: string | null
+          price_source_sheet?: string | null
+          product_id?: string | null
+          product_name?: string | null
+          quantity?: number | null
+          quote_id?: string | null
+          sku?: string | null
+          strength?: string | null
+          unit_price?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quote_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "catalog_products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quote_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quote_items_quote_id_fkey"
+            columns: ["quote_id"]
+            isOneToOne: false
+            referencedRelation: "quotes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quote_items_quote_id_fkey"
+            columns: ["quote_id"]
+            isOneToOne: false
+            referencedRelation: "v_quotes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      v_quotes: {
+        Row: {
+          accepted_at: string | null
+          client_id: string | null
+          client_snapshot: Json | null
+          company_name: string | null
+          converted_at: string | null
+          converted_order_id: string | null
+          converted_order_number: string | null
+          created_at: string | null
+          currency: string | null
+          customer_reference: string | null
+          declined_at: string | null
+          discount: number | null
+          expiration_date: string | null
+          expired_at: string | null
+          fees: number | null
+          id: string | null
+          is_expired: boolean | null
+          line_count: number | null
+          notes: string | null
+          payment_terms: Database["public"]["Enums"]["payment_terms"] | null
+          pricing_sheet_id: string | null
+          pricing_sheet_name: string | null
+          quote_date: string | null
+          quote_number: string | null
+          sales_rep_id: string | null
+          sales_rep_name: string | null
+          sent_at: string | null
+          shipping: number | null
+          status: Database["public"]["Enums"]["quote_status"] | null
+          subtotal: number | null
+          tax_amount: number | null
+          tax_rate: number | null
+          total: number | null
+          updated_at: string | null
+          voided_at: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quotes_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quotes_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "v_profit_by_client"
+            referencedColumns: ["client_id"]
+          },
+          {
+            foreignKeyName: "quotes_converted_order_id_fkey"
+            columns: ["converted_order_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quotes_converted_order_id_fkey"
+            columns: ["converted_order_id"]
+            isOneToOne: false
+            referencedRelation: "v_ar_aging"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quotes_converted_order_id_fkey"
+            columns: ["converted_order_id"]
+            isOneToOne: false
+            referencedRelation: "v_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quotes_converted_order_id_fkey"
+            columns: ["converted_order_id"]
+            isOneToOne: false
+            referencedRelation: "v_outstanding_invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quotes_pricing_sheet_id_fkey"
+            columns: ["pricing_sheet_id"]
+            isOneToOne: false
+            referencedRelation: "pricing_sheets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quotes_sales_rep_id_fkey"
+            columns: ["sales_rep_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quotes_sales_rep_id_fkey"
+            columns: ["sales_rep_id"]
+            isOneToOne: false
+            referencedRelation: "v_profit_by_rep"
+            referencedColumns: ["rep_id"]
+          },
+        ]
+      }
       v_revenue_monthly: {
         Row: {
           gross_profit: number | null
@@ -4074,6 +4639,7 @@ export type Database = {
         }
         Returns: Json
       }
+      convert_quote_to_order: { Args: { p_quote: string }; Returns: string }
       create_commission: {
         Args: {
           p_commission_type: string
@@ -4093,10 +4659,16 @@ export type Database = {
       delete_draft: { Args: { p_invoice: string }; Returns: undefined }
       delete_order_expense: { Args: { p_expense: string }; Returns: undefined }
       delete_po_draft: { Args: { p_po: string }; Returns: undefined }
+      delete_quote_draft: { Args: { p_quote: string }; Returns: undefined }
       duplicate_pricing_model: {
         Args: { p_code: string; p_name: string; p_sheet: string }
         Returns: string
       }
+      duplicate_quote: {
+        Args: { p_quote: string; p_retain: boolean }
+        Returns: string
+      }
+      expire_quotes: { Args: never; Returns: number }
       import_catalog: {
         Args: { p_batch: string; p_mode: string; p_rows: Json }
         Returns: Json
@@ -4243,7 +4815,27 @@ export type Database = {
         }
         Returns: string
       }
+      save_quote_draft: {
+        Args: {
+          p_client: string
+          p_currency: string
+          p_customer_reference: string
+          p_discount: number
+          p_expiration_date: string
+          p_fees: number
+          p_lines: Json
+          p_notes: string
+          p_payment_terms: string
+          p_quote: string
+          p_quote_date: string
+          p_selected_model: string
+          p_shipping: number
+          p_tax_rate: number
+        }
+        Returns: string
+      }
       send_po: { Args: { p_po: string }; Returns: string }
+      send_quote: { Args: { p_quote: string }; Returns: string }
       set_client_override: {
         Args: {
           p_active: boolean
@@ -4296,6 +4888,10 @@ export type Database = {
         Args: { p_note: string; p_po: string; p_to: string }
         Returns: undefined
       }
+      transition_quote_status: {
+        Args: { p_note: string; p_quote: string; p_to: string }
+        Returns: undefined
+      }
       update_commission: {
         Args: {
           p_commission: string
@@ -4336,6 +4932,10 @@ export type Database = {
         Returns: undefined
       }
       void_po: { Args: { p_po: string; p_reason: string }; Returns: undefined }
+      void_quote: {
+        Args: { p_quote: string; p_reason: string }
+        Returns: undefined
+      }
     }
     Enums: {
       client_status: "active" | "inactive" | "prospect"
@@ -4398,6 +4998,14 @@ export type Database = {
         | "void"
       product_status: "active" | "discontinued"
       profile_status: "active" | "inactive"
+      quote_status:
+        | "draft"
+        | "sent"
+        | "accepted"
+        | "declined"
+        | "expired"
+        | "converted"
+        | "void"
       sheet_status: "active" | "archived"
       user_role: "owner" | "admin" | "sales_rep"
     }
@@ -4594,6 +5202,15 @@ export const Constants = {
       ],
       product_status: ["active", "discontinued"],
       profile_status: ["active", "inactive"],
+      quote_status: [
+        "draft",
+        "sent",
+        "accepted",
+        "declined",
+        "expired",
+        "converted",
+        "void",
+      ],
       sheet_status: ["active", "archived"],
       user_role: ["owner", "admin", "sales_rep"],
     },

@@ -14,9 +14,10 @@ import { getClientOverrides, getClientAssignments, getPricingModels } from "@/li
 import { getCatalogProducts } from "@/lib/catalog/queries";
 import {
   getClientDetail, getActiveReps, getClientInvoices, getClientPurchaseSummary,
-  getClientProfit, getClientCommissions, getClientProducts, getClientTimeline,
+  getClientProfit, getClientCommissions, getClientProducts, getClientTimeline, getClientQuotes,
   type Address,
 } from "@/lib/clients/queries";
+import { QuoteStatusBadge } from "@/components/quotes/quote-status-badge";
 import { formatCurrency } from "@/lib/utils";
 
 export const metadata: Metadata = { title: "Client" };
@@ -46,7 +47,7 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
 
   const [
     overrides, assignments, models, products, reps,
-    invoices, summary, profit, commissions, purchased, timeline,
+    invoices, summary, profit, commissions, purchased, timeline, quotes,
   ] = await Promise.all([
     getClientOverrides(id),
     getClientAssignments(id),
@@ -59,6 +60,7 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
     canManage ? getClientCommissions(id) : Promise.resolve(null),
     getClientProducts(id),
     getClientTimeline(id),
+    getClientQuotes(id),
   ]);
 
   const modelOptions = models.map((m) => ({ id: m.id, name: m.name, code: m.code, currency: m.currency }));
@@ -109,6 +111,37 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
             assignments={assignments as never}
             canManage={!!canManage}
           />
+
+          {/* Quotes */}
+          <Card>
+            <CardHeader><CardTitle>Quotes</CardTitle></CardHeader>
+            <CardContent>
+              {quotes.length === 0 ? (
+                <EmptyPanel icon={FileText} text="No quotes yet. Create one from the Quotes module." />
+              ) : (
+                <div className="space-y-0">
+                  {quotes.map((q) => (
+                    <div key={q.id} className="flex items-center justify-between border-b border-border py-2.5 text-sm last:border-0">
+                      <div>
+                        <Link href={`/quotes/${q.id}`} className="font-mono text-xs hover:underline">{q.quote_number}</Link>
+                        <span className="ml-2 text-muted-foreground">{q.quote_date ? new Date(`${q.quote_date}T00:00:00`).toLocaleDateString() : "—"}</span>
+                        {q.expiration_date && (
+                          <span className="ml-2 text-xs text-muted-foreground">exp {new Date(`${q.expiration_date}T00:00:00`).toLocaleDateString()}</span>
+                        )}
+                        {q.converted_order_number && (
+                          <Link href={`/orders/${q.converted_order_id}`} className="ml-2 text-xs text-muted-foreground hover:underline">→ {q.converted_order_number}</Link>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <QuoteStatusBadge status={q.status} isExpired={q.is_expired} />
+                        <span className="tabular-nums">{formatCurrency(q.total, q.currency)}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
 
           {/* Invoices */}
           <Card>
