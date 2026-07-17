@@ -1,29 +1,34 @@
 import type { Metadata } from "next";
-import { Factory, Plus } from "lucide-react";
+import Link from "next/link";
+import { Plus } from "lucide-react";
 import { PageHeader } from "@/components/patterns/page-header";
-import { EmptyState } from "@/components/patterns/empty-state";
 import { Button } from "@/components/ui/button";
+import { getCurrentUser } from "@/lib/auth";
+import { getPurchaseOrdersList } from "@/lib/purchase-orders/queries";
+import { PurchasingManager } from "@/components/purchasing/purchasing-manager";
+import { RestrictedNotice } from "@/components/purchasing/restricted-notice";
 
 export const metadata: Metadata = { title: "Purchasing" };
+export const dynamic = "force-dynamic";
 
-export default function PurchasingPage() {
+export default async function PurchasingPage() {
+  const user = await getCurrentUser();
+  const isAdmin = user?.role === "owner" || user?.role === "admin";
+
   return (
     <>
       <PageHeader
         title="Purchasing"
-        description="Manufacturer purchase orders — a ten-stage lifecycle, attachments, and a manufacturer payment ledger."
+        description="Manufacturer purchase orders — a ten-stage lifecycle, private attachments, and a manufacturer payment ledger."
         actions={
-          <Button disabled>
-            <Plus className="h-4 w-4" />
-            New purchase order
-          </Button>
+          isAdmin ? (
+            <Button asChild>
+              <Link href="/purchasing/new"><Plus className="h-4 w-4" /> New purchase order</Link>
+            </Button>
+          ) : null
         }
       />
-      <EmptyState
-        icon={Factory}
-        title="No purchase orders yet"
-        description="Purchasing arrives in milestone M6 — with deposits/balance/refund tracking separate from status, so every PO shows total, paid, and remaining at a glance."
-      />
+      {isAdmin ? <PurchasingManager orders={await getPurchaseOrdersList()} /> : <RestrictedNotice />}
     </>
   );
 }

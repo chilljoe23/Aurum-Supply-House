@@ -1,22 +1,31 @@
 import type { Metadata } from "next";
-import { HandCoins } from "lucide-react";
 import { PageHeader } from "@/components/patterns/page-header";
-import { EmptyState } from "@/components/patterns/empty-state";
+import { CommissionsManager } from "@/components/commissions/commissions-manager";
+import { getCurrentUser } from "@/lib/auth";
+import { getCommissionsList, getCommissionSummary } from "@/lib/commissions/queries";
 
 export const metadata: Metadata = { title: "Commissions" };
+export const dynamic = "force-dynamic";
 
-export default function CommissionsPage() {
+export default async function CommissionsPage() {
+  const [user, commissions, summary] = await Promise.all([
+    getCurrentUser(),
+    getCommissionsList(),
+    getCommissionSummary(),
+  ]);
+  const canManage = user?.role === "owner" || user?.role === "admin";
+
   return (
     <>
       <PageHeader
         title="Commissions"
-        description="Multiple recipients per order — internal reps and external referral partners — across all commission types."
+        description={
+          canManage
+            ? "Every recipient across all orders — internal reps and external partners. Approve earned commissions and record payments."
+            : "Your commissions across all orders, with live status from pending to paid."
+        }
       />
-      <EmptyState
-        icon={HandCoins}
-        title="No commissions yet"
-        description="Commissions arrive in milestone M5 — computed from each order's frozen economics, with an approve → paid workflow and owed/paid dashboards by rep and month."
-      />
+      <CommissionsManager commissions={commissions} summary={summary} canManage={!!canManage} />
     </>
   );
 }

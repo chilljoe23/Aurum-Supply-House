@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { SlidersHorizontal } from "lucide-react";
 import { getCurrentUser } from "@/lib/auth";
 import { PageHeader } from "@/components/patterns/page-header";
-import { EmptyState } from "@/components/patterns/empty-state";
+import { getCompanySettings } from "@/lib/settings/queries";
+import { CompanySettingsForm } from "@/components/settings/company-settings-form";
 
 export const metadata: Metadata = { title: "Settings" };
 export const dynamic = "force-dynamic";
@@ -14,18 +14,16 @@ export default async function SettingsPage() {
   if (!user || user.role === "sales_rep") {
     redirect("/command-center");
   }
+  const settings = await getCompanySettings();
 
   return (
     <>
       <PageHeader
         title="Settings"
-        description="Company profile, branding, numbering, tax defaults, and team roles."
+        description="Company profile, invoice branding, numbering, tax defaults, and payment instructions."
       />
-      <EmptyState
-        icon={SlidersHorizontal}
-        title="Settings arrive alongside the modules"
-        description="Company details and PDF branding are configured here as Purchasing and Orders come online. Only Owners and Admins can reach this section."
-      />
+      {/* Admins can view; only the Owner may edit (enforced in the action + RLS). */}
+      <CompanySettingsForm settings={settings} readOnly={user.role !== "owner"} />
     </>
   );
 }

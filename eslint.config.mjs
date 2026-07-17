@@ -6,6 +6,10 @@ const eslintConfig = [
       ".next/**",
       "node_modules/**",
       "next-env.d.ts",
+      // Node's built-in test runner (node:test) executes these directly with
+      // TypeScript type-stripping; they import source with explicit .ts
+      // extensions, which the app's bundler-resolution lint rules don't expect.
+      "tests/**",
     ],
   },
   ...nextCoreWebVitals,
