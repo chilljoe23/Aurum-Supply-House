@@ -106,15 +106,25 @@ function escapeHtml(s: string): string {
 
 // ---- Chromium resolution ----------------------------------------------------
 
-// Resolve a Chrome/Chromium executable without bundling one. Order:
+type ChromeRuntime = {
+  executablePath: string;
+  args: string[];
+  headless: true | "shell";
+};
+
+// Resolve a Chrome/Chromium executable. Order:
 //   1. PUPPETEER_EXECUTABLE_PATH / CHROME_PATH (explicit, for deployment)
 //   2. common Linux locations (servers/containers)
 //   3. common macOS locations (local dev)
-// Returns null when none is found; the route then reports a clear error and the
-// UI's print-to-PDF fallback still works.
-function resolveChromeExecutable(): string | null {
+//   4. packaged serverless Chromium (Vercel/AWS Lambda)
+// Returns null when none can be initialized; the route then reports a clear
+// error and the UI's print-to-PDF fallback still works.
+async function resolveChromeRuntime(): Promise<ChromeRuntime | null> {
+  const systemArgs = ["--no-sandbox", "--disable-setuid-sandbox", "--disable-gpu"];
   const envPath = process.env.PUPPETEER_EXECUTABLE_PATH || process.env.CHROME_PATH;
-  if (envPath && existsSync(envPath)) return envPath;
+  if (envPath && existsSync(envPath)) {
+    return { executablePath: envPath, args: systemArgs, headless: true };
+  }
   const candidates = [
     "/usr/bin/google-chrome-stable",
     "/usr/bin/google-chrome",
@@ -125,9 +135,25 @@ function resolveChromeExecutable(): string | null {
     "/Applications/Chromium.app/Contents/MacOS/Chromium",
   ];
   for (const c of candidates) {
-    if (existsSync(c)) return c;
+    if (existsSync(c)) {
+      return { executablePath: c, args: systemArgs, headless: true };
+    }
   }
-  return null;
+
+  // Vercel functions do not include a system Chrome binary. Sparticuz ships a
+  // compressed headless-shell build and extracts it into the function's /tmp
+  // directory on first use. Keep this import lazy so ordinary page requests do
+  // not initialize or decompress Chromium.
+  try {
+    const chromium = (await import("@sparticuz/chromium")).default;
+    return {
+      executablePath: await chromium.executablePath(),
+      args: chromium.args,
+      headless: "shell",
+    };
+  } catch {
+    return null;
+  }
 }
 
 export class ChromiumNotFoundError extends Error {
@@ -143,16 +169,16 @@ export class ChromiumNotFoundError extends Error {
 // preview's @page rule (0.5in). printBackground keeps the subtle cream accents;
 // preferCSSPageSize honors @page if the document sets it.
 export async function htmlToPdf(html: string): Promise<Uint8Array> {
-  const executablePath = resolveChromeExecutable();
-  if (!executablePath) throw new ChromiumNotFoundError();
+  const chrome = await resolveChromeRuntime();
+  if (!chrome) throw new ChromiumNotFoundError();
 
   // Lazy import so puppeteer-core is only loaded on the PDF path, never bundled
   // into any client or page render.
   const puppeteer = (await import("puppeteer-core")).default;
   const browser = await puppeteer.launch({
-    executablePath,
-    headless: true,
-    args: ["--no-sandbox", "--disable-setuid-sandbox", "--disable-gpu"],
+    executablePath: chrome.executablePath,
+    headless: chrome.headless,
+    args: await puppeteer.defaultArgs({ args: chrome.args, headless: chrome.headless }),
   });
   try {
     const page = await browser.newPage();
