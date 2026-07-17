@@ -26,7 +26,7 @@ export const LOGO_ASPECT = LOGO_WIDTH / LOGO_HEIGHT; // ≈ 3.462
 
 // Deterministic, filesystem-safe document filenames, e.g.
 //   Aurum-Invoice-AUR-1001.pdf   Aurum-Quote-QTE-1001.pdf
-//   Aurum-Purchase-Order-PO-1001.pdf
+//   Aurum-Purchase-Order-PO-1001.pdf   Aurum-Packing-Slip-PS-1001.pdf
 // Any character outside [A-Za-z0-9._-] is collapsed to a single dash; leading/
 // trailing dashes are trimmed. A blank/symbol-only number degrades to the doc kind.
 export function sanitizeFilenamePart(raw: string): string {
@@ -37,7 +37,10 @@ export function sanitizeFilenamePart(raw: string): string {
     .slice(0, 80);
 }
 
-export function documentPdfFilename(kind: "Invoice" | "Quote" | "Purchase-Order", number: string): string {
+export function documentPdfFilename(
+  kind: "Invoice" | "Quote" | "Purchase-Order" | "Packing-Slip",
+  number: string,
+): string {
   const num = sanitizeFilenamePart(number);
   return num ? `Aurum-${kind}-${num}.pdf` : `Aurum-${kind}.pdf`;
 }

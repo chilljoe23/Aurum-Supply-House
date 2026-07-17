@@ -109,6 +109,12 @@ export const voidSchema = z.object({
   reason: z.string().trim().min(1, "A reason is required to void an invoice").max(500),
 });
 
+// ---- Owner-only permanent deletion (Draft/Void only; DB re-verifies) --------
+export const deleteOrderSchema = z.object({
+  invoice_id: z.string().uuid(),
+  reason: z.string().trim().min(1, "A deletion reason is required").max(500),
+});
+
 // ---- Lot assignment (post-issue, narrowly scoped + audited) -----------------
 export const lotSchema = z.object({
   item_id: z.string().uuid(),
@@ -127,3 +133,52 @@ export const expenseSchema = z.object({
   incurred_on: dateOpt,
 });
 export type ExpenseInput = z.infer<typeof expenseSchema>;
+
+// ---- Fulfillment: operational line status (manually settable subset) --------
+// "partially_shipped" / "shipped" are deliberately NOT accepted here — they are
+// derived from shipment quantities and can never be selected by hand.
+export const OPERATIONAL_STATUSES = [
+  "not_yet_shipped",
+  "in_production",
+  "ready_to_ship",
+  "backordered",
+  "cancelled",
+] as const;
+
+export const lineStatusSchema = z.object({
+  item_id: z.string().uuid(),
+  status: z.enum(OPERATIONAL_STATUSES),
+});
+export type LineStatusInput = z.infer<typeof lineStatusSchema>;
+
+// ---- Fulfillment: create shipment -------------------------------------------
+const shipQty = z.coerce.number().gt(0, "Quantity must be greater than zero").max(10_000_000);
+
+export const shipmentLineSchema = z.object({
+  invoice_item_id: z.string().uuid(),
+  quantity: shipQty,
+  // Optional lot snapshot overrides; when omitted the DB snapshots the line's lot.
+  lot_number: opt,
+  manufacturing_date: dateOpt,
+  expiration_date: dateOpt,
+  retest_date: dateOpt,
+});
+
+export const shipmentSchema = z.object({
+  invoice_id: z.string().uuid(),
+  shipment_date: dateOpt,
+  carrier: opt,
+  service: opt,
+  tracking_number: opt,
+  tracking_url: opt,
+  notes: opt,
+  lines: z.array(shipmentLineSchema).min(1, "Select at least one line to ship"),
+});
+export type ShipmentInput = z.infer<typeof shipmentSchema>;
+export type ShipmentLineInput = z.infer<typeof shipmentLineSchema>;
+
+// ---- Fulfillment: void a shipment (audited correction) ----------------------
+export const voidShipmentSchema = z.object({
+  shipment_id: z.string().uuid(),
+  reason: z.string().trim().min(1, "A void reason is required").max(500),
+});

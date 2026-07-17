@@ -6,12 +6,16 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { KpiCard } from "@/components/patterns/kpi-card";
 import { OrderStatusBadge } from "@/components/orders/status-badge";
+import { OrderFulfillmentBadge } from "@/components/orders/fulfillment-status-badge";
 import { OrderActions } from "@/components/orders/order-actions";
+import { OrderFulfillment } from "@/components/orders/order-fulfillment";
 import { LotEditor } from "@/components/orders/lot-editor";
 import { ExpenseManager } from "@/components/orders/expense-manager";
 import { CommissionPanel } from "@/components/commissions/commission-panel";
 import { getCurrentUser } from "@/lib/auth";
-import { getOrderDetail } from "@/lib/orders/queries";
+import { SALES_REPS_ENABLED } from "@/lib/launch";
+import { getOrderDetail, getOrderFulfillment } from "@/lib/orders/queries";
+import { isOrderDeletable } from "@/lib/orders/deletion";
 import { getInvoiceCommissions, getRecipientProfiles } from "@/lib/commissions/queries";
 import { addressLines } from "@/lib/orders/invoice-view-model";
 import { PAYMENT_METHOD_OPTIONS } from "@/lib/orders/schemas";
@@ -36,16 +40,30 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
 
   const { header: h, items, payments, expenses, statusHistory, activity } = detail;
   const canManage = user?.role === "owner" || user?.role === "admin";
-  const [commissions, recipients] = await Promise.all([
+  const [commissions, recipients, fulfillment] = await Promise.all([
     getInvoiceCommissions(id),
     canManage ? getRecipientProfiles() : Promise.resolve([]),
+    getOrderFulfillment(id),
   ]);
+  // Fulfillment is an independent axis from payment/invoice status. Shown once an
+  // order is issued (drafts have nothing to ship yet).
+  const showFulfillment = h.status !== "draft";
   const canSeeInternal = h.can_see_internal;
   const c = h.currency;
   const snap = (h.client_snapshot ?? {}) as Record<string, unknown>;
   const billing = addressLines(snap.billing_address as Record<string, unknown> | null);
   const shipping = addressLines(snap.shipping_address as Record<string, unknown> | null);
   const activePayments = payments.filter((p) => !p.voided);
+  // Owner-only permanent deletion is offered only when the order is provably an
+  // eligible mistake: a Draft or Void with no payment history and no retained
+  // (paid/approved/earned) commission. This is a convenience gate — the RPC
+  // re-verifies every rule server-side before deleting anything.
+  const deleteEligible = isOrderDeletable({
+    role: user?.role,
+    status: h.status,
+    paymentCount: payments.length,
+    commissionStatuses: commissions.map((cm) => cm.status),
+  });
 
   return (
     <div className="space-y-6">
@@ -54,11 +72,14 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
       </Link>
 
       <div className="flex flex-wrap items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
           <h1 className="font-mono text-2xl font-semibold tracking-tight">{h.invoice_number}</h1>
           <OrderStatusBadge status={h.status} />
+          {showFulfillment && fulfillment.summary && (
+            <OrderFulfillmentBadge status={fulfillment.summary.fulfillment_status} />
+          )}
         </div>
-        <OrderActions id={h.id} status={h.status} canManage={!!canManage} balanceDue={h.balance_due} currency={c} />
+        <OrderActions id={h.id} status={h.status} canManage={!!canManage} canDeletePermanently={deleteEligible} balanceDue={h.balance_due} currency={c} />
       </div>
 
       {/* KPIs */}
@@ -140,6 +161,17 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
               </div>
             </CardContent>
           </Card>
+
+          {/* Fulfillment — item-level statuses, shipments, packing slips (independent of payment status) */}
+          {showFulfillment && (
+            <OrderFulfillment
+              invoiceId={h.id}
+              orderStatus={h.status}
+              canManage={!!canManage}
+              lines={fulfillment.lines}
+              shipments={fulfillment.shipments}
+            />
+          )}
 
           {/* Financial summary */}
           <Card>
@@ -226,7 +258,7 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
             </CardHeader>
             <CardContent className="space-y-2.5 text-sm">
               <InfoRow label="Client" value={h.company_name} />
-              <InfoRow label="Representative" value={h.sales_rep_name} />
+              {SALES_REPS_ENABLED && <InfoRow label="Representative" value={h.sales_rep_name} />}
               <InfoRow label="Pricing model" value={h.pricing_sheet_name ?? "— default —"} />
               <InfoRow label="Issue date" value={h.issue_date ? new Date(`${h.issue_date}T00:00:00`).toLocaleDateString() : "— draft —"} />
               <InfoRow label="Due date" value={h.due_date ? new Date(`${h.due_date}T00:00:00`).toLocaleDateString() : "—"} />

@@ -1,51 +1,35 @@
 // ============================================================================
 // The Aurum COMMISSION STATEMENT document. Shares the invoice's visual language
-// (deep navy / muted sage / warm ivory, Geist) so it feels part of the family,
-// but is unmistakably an INTERNAL / recipient document — never a customer invoice.
+// (deep navy / muted sage / warm ivory, Geist) and the SAME official-logo header
+// as the approved Invoice / Quote / Purchase Order documents, so it feels part of
+// the family, but is unmistakably an INTERNAL / recipient document — never a
+// customer invoice.
 //
 // It contains ONLY recipient-safe fields. Client true cost, gross profit, margin,
 // and company net profit are NOT props on StatementModel and cannot appear here.
 // ============================================================================
+
+import { LOGO_PUBLIC_PATH } from "@/lib/documents/branding";
+import type { StatementModel } from "@/lib/commissions/statement-model";
+
+export type { StatementModel, StatementRow } from "@/lib/commissions/statement-model";
 
 const NAVY = "#112B46";
 const SAGE = "#758B6A";
 const INK = "#2B2B2B";
 const MUTED = "#6B6B63";
 const BORDER = "#E4E0D6";
-const IVORY = "#FFFCF8";
-
-export type StatementRow = {
-  invoiceNumber: string;
-  client: string;
-  invoicePaidDate: string | null;
-  calcType: string;
-  rate: string;
-  amount: number;
-  status: string;
-  commissionPaidDate: string | null;
-  paymentMethod: string | null;
-  paymentReference: string | null;
-};
-
-export type StatementModel = {
-  company: { name: string; lines: string[]; email: string | null; phone: string | null };
-  recipient: { name: string; type: string; company: string | null; email: string | null };
-  periodLabel: string;
-  generatedOn: string;
-  currency: string;
-  rows: StatementRow[];
-  total: number;
-  paidTotal: number;
-  earnedTotal: number;
-  approvedTotal: number;
-  owedTotal: number; // earned + approved (not yet paid)
-};
 
 function money(v: number, currency: string): string {
   return new Intl.NumberFormat("en-US", { style: "currency", currency, maximumFractionDigits: 2 }).format(v);
 }
 
-export function CommissionStatement({ model }: { model: StatementModel }) {
+// `logoSrc` is the official Aurum wordmark — identical to the approved Invoice /
+// Quote / Purchase Order header. The browser preview uses the shipped public
+// asset; the PDF route passes a base64 data: URI of the same file so it renders
+// with no origin/network dependency. Either way the <img> keeps its aspect ratio
+// (fixed height 44, width:auto) — never stretched, recolored, or recreated.
+export function CommissionStatement({ model, logoSrc = LOGO_PUBLIC_PATH }: { model: StatementModel; logoSrc?: string }) {
   const c = model.currency;
   return (
     <div
@@ -65,22 +49,9 @@ export function CommissionStatement({ model }: { model: StatementModel }) {
       {/* Header */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 24 }}>
         <div>
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <div
-              aria-hidden
-              style={{ width: 34, height: 34, borderRadius: 8, background: NAVY, color: IVORY, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: 18 }}
-            >
-              A
-            </div>
-            <div style={{ fontSize: 20, fontWeight: 700, color: NAVY, letterSpacing: "-0.01em" }}>{model.company.name}</div>
-          </div>
-          <div style={{ marginTop: 10, color: MUTED, fontSize: 12 }}>
-            {model.company.lines.map((l, i) => (
-              <div key={i}>{l}</div>
-            ))}
-            {model.company.email && <div>{model.company.email}</div>}
-            {model.company.phone && <div>{model.company.phone}</div>}
-          </div>
+          {/* eslint-disable-next-line @next/next/no-img-element -- fixed-size brand asset; also rendered by the headless-Chromium PDF route where next/image is unavailable */}
+          <img src={logoSrc} alt={model.company.name} style={{ height: 44, width: "auto", display: "block" }} />
+          <div style={{ marginTop: 8, color: MUTED, fontSize: 12 }}>{model.company.location}</div>
         </div>
         <div style={{ textAlign: "right" }}>
           <div style={{ fontSize: 22, fontWeight: 700, color: SAGE, letterSpacing: "0.02em" }}>COMMISSION</div>

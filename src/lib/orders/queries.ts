@@ -1,10 +1,16 @@
 import "server-only";
 import { createClient } from "@/lib/supabase/server";
+import { createUntypedClient } from "@/lib/supabase/untyped";
 import {
   buildInvoiceViewModel,
   type InvoiceViewModel,
   type InvoiceHeaderInput,
 } from "@/lib/orders/invoice-view-model";
+import {
+  buildPackingSlipViewModel,
+  type PackingSlipViewModel,
+  type PackingSlipLineInput,
+} from "@/lib/orders/packing-slip-view-model";
 
 // All reads go through the masked, row-scoped views (v_orders / v_order_items),
 // so internal economics are NULL for reps at the DB layer — not just hidden in
@@ -31,6 +37,9 @@ export type OrderListRow = {
   gross_profit: number | null;
   gross_margin: number | null;
   can_see_internal: boolean;
+  // Derived fulfillment status, merged from v_order_fulfillment_summary. Optional
+  // so the base list read stays a single query; the page enriches it.
+  fulfillment_status?: string | null;
 };
 
 export async function getOrdersList(): Promise<OrderListRow[]> {
@@ -183,6 +192,161 @@ export async function getOrderDetail(id: string): Promise<OrderDetail | null> {
       actor_name: a.actor_id ? actorNames.get(a.actor_id) ?? null : null,
     })),
   };
+}
+
+// ---- Fulfillment reads (row-scoped views; no cost/profit columns) -----------
+
+export type FulfillmentLine = {
+  invoice_item_id: string;
+  sku: string;
+  product_name: string;
+  strength: string | null;
+  pack_size: string | null;
+  quantity_ordered: number;
+  quantity_shipped: number;
+  quantity_remaining: number;
+  operational_status: string;
+  fulfillment_status: string;
+  lot_number: string | null;
+  expiration_date: string | null;
+  latest_shipment_date: string | null;
+  latest_tracking_number: string | null;
+};
+
+export type ShipmentItemRow = {
+  id: string;
+  invoice_item_id: string;
+  sku: string;
+  product_name: string;
+  quantity_shipped: number;
+  lot_number: string | null;
+  expiration_date: string | null;
+  retest_date: string | null;
+};
+
+export type ShipmentRow = {
+  id: string;
+  invoice_id: string;
+  shipment_number: string;
+  shipment_date: string | null;
+  carrier: string | null;
+  service: string | null;
+  tracking_number: string | null;
+  tracking_url: string | null;
+  notes: string | null;
+  status: string;
+  voided_reason: string | null;
+  created_by_name: string | null;
+  created_at: string;
+  item_count: number;
+  total_quantity: number;
+  items: ShipmentItemRow[];
+};
+
+export type OrderFulfillmentSummary = {
+  invoice_id: string;
+  fulfillment_status: string;
+  line_count: number;
+  total_ordered: number;
+  total_shipped: number;
+  shippable_remaining: number;
+  shipment_count: number;
+};
+
+export type OrderFulfillment = {
+  lines: FulfillmentLine[];
+  shipments: ShipmentRow[];
+  summary: OrderFulfillmentSummary | null;
+};
+
+export async function getOrderFulfillment(invoiceId: string): Promise<OrderFulfillment> {
+  // New fulfillment views are not yet in the generated types (regenerated after
+  // migrations apply) — read via the loosely-typed client, like the PO module.
+  const supabase = await createUntypedClient();
+  const [{ data: lines }, { data: shipments }, { data: shipmentItems }, { data: summary }] = await Promise.all([
+    supabase.from("v_order_fulfillment_lines").select("*").eq("invoice_id", invoiceId).order("created_at"),
+    supabase
+      .from("v_order_shipments")
+      .select("*")
+      .eq("invoice_id", invoiceId)
+      .order("created_at", { ascending: false }),
+    supabase.from("v_order_shipment_items").select("*").eq("invoice_id", invoiceId).order("created_at"),
+    supabase.from("v_order_fulfillment_summary").select("*").eq("invoice_id", invoiceId).maybeSingle(),
+  ]);
+
+  const itemsByShipment = new Map<string, ShipmentItemRow[]>();
+  for (const si of shipmentItems ?? []) {
+    const arr = itemsByShipment.get(si.shipment_id as string) ?? [];
+    arr.push({
+      id: si.id as string,
+      invoice_item_id: si.invoice_item_id as string,
+      sku: si.sku as string,
+      product_name: si.product_name as string,
+      quantity_shipped: Number(si.quantity_shipped ?? 0),
+      lot_number: (si.lot_number as string | null) ?? null,
+      expiration_date: (si.expiration_date as string | null) ?? null,
+      retest_date: (si.retest_date as string | null) ?? null,
+    });
+    itemsByShipment.set(si.shipment_id as string, arr);
+  }
+
+  return {
+    lines: (lines ?? []).map((l) => ({
+      invoice_item_id: l.invoice_item_id as string,
+      sku: l.sku as string,
+      product_name: l.product_name as string,
+      strength: (l.strength as string | null) ?? null,
+      pack_size: (l.pack_size as string | null) ?? null,
+      quantity_ordered: Number(l.quantity_ordered ?? 0),
+      quantity_shipped: Number(l.quantity_shipped ?? 0),
+      quantity_remaining: Number(l.quantity_remaining ?? 0),
+      operational_status: l.operational_status as string,
+      fulfillment_status: l.fulfillment_status as string,
+      lot_number: (l.lot_number as string | null) ?? null,
+      expiration_date: (l.expiration_date as string | null) ?? null,
+      latest_shipment_date: (l.latest_shipment_date as string | null) ?? null,
+      latest_tracking_number: (l.latest_tracking_number as string | null) ?? null,
+    })),
+    shipments: (shipments ?? []).map((s) => ({
+      id: s.id as string,
+      invoice_id: s.invoice_id as string,
+      shipment_number: s.shipment_number as string,
+      shipment_date: (s.shipment_date as string | null) ?? null,
+      carrier: (s.carrier as string | null) ?? null,
+      service: (s.service as string | null) ?? null,
+      tracking_number: (s.tracking_number as string | null) ?? null,
+      tracking_url: (s.tracking_url as string | null) ?? null,
+      notes: (s.notes as string | null) ?? null,
+      status: s.status as string,
+      voided_reason: (s.voided_reason as string | null) ?? null,
+      created_by_name: (s.created_by_name as string | null) ?? null,
+      created_at: s.created_at as string,
+      item_count: Number(s.item_count ?? 0),
+      total_quantity: Number(s.total_quantity ?? 0),
+      items: itemsByShipment.get(s.id as string) ?? [],
+    })),
+    summary: summary
+      ? {
+          invoice_id: summary.invoice_id as string,
+          fulfillment_status: summary.fulfillment_status as string,
+          line_count: Number(summary.line_count ?? 0),
+          total_ordered: Number(summary.total_ordered ?? 0),
+          total_shipped: Number(summary.total_shipped ?? 0),
+          shippable_remaining: Number(summary.shippable_remaining ?? 0),
+          shipment_count: Number(summary.shipment_count ?? 0),
+        }
+      : null,
+  };
+}
+
+// Fulfillment status per order for the Orders list — one round-trip, mapped by id.
+export async function getOrderFulfillmentSummaryMap(): Promise<Map<string, string>> {
+  const supabase = await createUntypedClient();
+  const { data } = await supabase
+    .from("v_order_fulfillment_summary")
+    .select("invoice_id,fulfillment_status")
+    .limit(2000);
+  return new Map((data ?? []).map((r: { invoice_id: string; fulfillment_status: string }) => [r.invoice_id, r.fulfillment_status]));
 }
 
 async function nameMap(
@@ -405,5 +569,120 @@ export async function getInvoiceViewModel(id: string): Promise<InvoiceViewModel 
       retest_date: (it.retest_date as string | null) ?? null,
     })),
     settings,
+  );
+}
+
+// ---- Packing slip view model (customer-facing; preview + PDF share this) ------
+// All reads go through the row-scoped fulfillment views, so an out-of-scope
+// invoice or shipment id resolves to null (→ 404) and no internal financial
+// field is ever queried. No service-role credentials are used.
+export async function getPackingSlipViewModel(
+  invoiceId: string,
+  shipmentId: string,
+): Promise<PackingSlipViewModel | null> {
+  // Reads span new fulfillment views not yet in the generated types.
+  const supabase = await createUntypedClient();
+
+  const { data: header } = await supabase
+    .from("v_orders")
+    .select("id,invoice_number,client_snapshot")
+    .eq("id", invoiceId)
+    .maybeSingle();
+  if (!header) return null;
+
+  const { data: shipment } = await supabase
+    .from("v_order_shipments")
+    .select("id,invoice_id,shipment_number,shipment_date,status,carrier,service,tracking_number,tracking_url,created_at")
+    .eq("id", shipmentId)
+    .eq("invoice_id", invoiceId)
+    .maybeSingle();
+  if (!shipment) return null;
+
+  const [{ data: thisItems }, { data: allItems }, { data: allShipments }, { data: fulfillmentLines }, settings] =
+    await Promise.all([
+      supabase
+        .from("v_order_shipment_items")
+        .select("invoice_item_id,sku,product_name,quantity_shipped,lot_number,expiration_date,retest_date")
+        .eq("shipment_id", shipmentId)
+        .order("created_at"),
+      supabase
+        .from("v_order_shipment_items")
+        .select("shipment_id,invoice_item_id,quantity_shipped")
+        .eq("invoice_id", invoiceId),
+      supabase
+        .from("v_order_shipments")
+        .select("id,status,created_at,shipment_number")
+        .eq("invoice_id", invoiceId),
+      supabase
+        .from("v_order_fulfillment_lines")
+        .select("invoice_item_id,quantity_ordered,strength,pack_size")
+        .eq("invoice_id", invoiceId),
+      supabase.from("app_settings").select("company_name,logo_path").eq("id", true).maybeSingle(),
+    ]);
+  const settingsRow = (settings?.data ?? null) as { company_name?: string | null; logo_path?: string | null } | null;
+
+  // Order finalized shipments deterministically so "previously shipped" is the
+  // sum from every finalized shipment that precedes THIS one.
+  const shipmentsById = new Map(
+    (allShipments ?? []).map((s) => [
+      s.id as string,
+      { status: s.status as string, key: `${s.created_at as string}|${s.shipment_number as string}` },
+    ]),
+  );
+  const thisKey = `${shipment.created_at as string}|${shipment.shipment_number as string}`;
+
+  const orderedByItem = new Map(
+    (fulfillmentLines ?? []).map((l) => [
+      l.invoice_item_id as string,
+      {
+        quantity_ordered: Number(l.quantity_ordered ?? 0),
+        strength: (l.strength as string | null) ?? null,
+        pack_size: (l.pack_size as string | null) ?? null,
+      },
+    ]),
+  );
+
+  const previouslyByItem = new Map<string, number>();
+  for (const si of allItems ?? []) {
+    const sh = shipmentsById.get(si.shipment_id as string);
+    if (!sh || sh.status !== "finalized") continue; // voided shipments never count
+    if (sh.key >= thisKey) continue; // strictly before THIS shipment
+    const itemId = si.invoice_item_id as string;
+    previouslyByItem.set(itemId, (previouslyByItem.get(itemId) ?? 0) + Number(si.quantity_shipped ?? 0));
+  }
+
+  const lines: PackingSlipLineInput[] = (thisItems ?? []).map((it) => {
+    const itemId = it.invoice_item_id as string;
+    const ctx = orderedByItem.get(itemId);
+    return {
+      sku: it.sku as string,
+      product_name: it.product_name as string,
+      strength: ctx?.strength ?? null,
+      pack_size: ctx?.pack_size ?? null,
+      quantity_ordered: ctx?.quantity_ordered ?? Number(it.quantity_shipped ?? 0),
+      quantity_this_shipment: Number(it.quantity_shipped ?? 0),
+      previously_shipped: previouslyByItem.get(itemId) ?? 0,
+      lot_number: (it.lot_number as string | null) ?? null,
+      expiration_date: (it.expiration_date as string | null) ?? null,
+      retest_date: (it.retest_date as string | null) ?? null,
+    };
+  });
+
+  return buildPackingSlipViewModel(
+    {
+      invoice_number: header.invoice_number as string,
+      client_snapshot: (header.client_snapshot ?? null) as Record<string, unknown> | null,
+    },
+    {
+      shipment_number: shipment.shipment_number as string,
+      shipment_date: (shipment.shipment_date as string | null) ?? null,
+      status: shipment.status as string,
+      carrier: (shipment.carrier as string | null) ?? null,
+      service: (shipment.service as string | null) ?? null,
+      tracking_number: (shipment.tracking_number as string | null) ?? null,
+      tracking_url: (shipment.tracking_url as string | null) ?? null,
+    },
+    lines,
+    { company_name: settingsRow?.company_name ?? "Aurum Supply House", logo_path: settingsRow?.logo_path ?? null },
   );
 }

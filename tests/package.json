@@ -1,0 +1,4 @@
+{
+  "//": "Scopes ES-module semantics to the test files only (Node's built-in test runner + TypeScript type-stripping). Does not affect the app build; tsconfig excludes this directory.",
+  "type": "module"
+}

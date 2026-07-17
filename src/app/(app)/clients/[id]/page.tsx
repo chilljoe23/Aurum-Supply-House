@@ -19,6 +19,7 @@ import {
 } from "@/lib/clients/queries";
 import { QuoteStatusBadge } from "@/components/quotes/quote-status-badge";
 import { formatCurrency } from "@/lib/utils";
+import { SALES_REPS_ENABLED } from "@/lib/launch";
 
 export const metadata: Metadata = { title: "Client" };
 export const dynamic = "force-dynamic";
@@ -44,6 +45,8 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
   const [user, client] = await Promise.all([getCurrentUser(), getClientDetail(id)]);
   if (!client) notFound();
   const canManage = user?.role === "owner" || user?.role === "admin";
+  // Owner-only launch: rep assignment is hidden even for owner/admin until reps ship.
+  const canAssignRep = canManage && SALES_REPS_ENABLED;
 
   const [
     overrides, assignments, models, products, reps,
@@ -53,7 +56,7 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
     getClientAssignments(id),
     getPricingModels(),
     getCatalogProducts(),
-    canManage ? getActiveReps() : Promise.resolve([]),
+    canAssignRep ? getActiveReps() : Promise.resolve([]),
     getClientInvoices(id),
     getClientPurchaseSummary(id),
     canManage ? getClientProfit(id) : Promise.resolve(null),
@@ -78,7 +81,7 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
           <h1 className="text-2xl font-semibold tracking-tight">{client.company_name}</h1>
           <StatusBadge status={client.status} />
         </div>
-        <ClientActions client={client} reps={reps} models={modelOptions} canAssignRep={!!canManage} />
+        <ClientActions client={client} reps={reps} models={modelOptions} canAssignRep={canAssignRep} />
       </div>
 
       {/* Derived KPIs — real numbers only; zero until M4 issues invoices. */}
@@ -199,7 +202,9 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
               <Field label="Primary contact" value={client.primary_contact_name} />
               <Field label="Email" value={client.email} />
               <Field label="Phone" value={client.phone} />
-              <Field label="Representative" value={client.assigned_rep_name ?? "— unassigned —"} />
+              {SALES_REPS_ENABLED && (
+                <Field label="Representative" value={client.assigned_rep_name ?? "— unassigned —"} />
+              )}
               <Field label="Pricing model" value={client.pricing_model_name ?? "— default —"} />
               <Field label="Payment terms" value={TERM_LABELS[client.payment_terms] ?? client.payment_terms} />
               <div className="flex justify-between gap-3">

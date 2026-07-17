@@ -3,14 +3,15 @@
 import * as React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Pencil, Send, CreditCard, Ban, FileText, Trash2, Loader2 } from "lucide-react";
+import { Pencil, Send, CreditCard, Ban, FileText, Trash2, Loader2, ShieldAlert } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { PAYMENT_METHOD_OPTIONS } from "@/lib/orders/schemas";
-import { issueInvoice, recordPayment, voidInvoice, deleteDraft } from "@/app/(app)/orders/actions";
+import { issueInvoice, recordPayment, voidInvoice, deleteDraft, deleteOrderPermanently } from "@/app/(app)/orders/actions";
+import { deletionConfirmed, DELETE_CONFIRM_WORD } from "@/lib/orders/deletion";
 import { formatCurrency } from "@/lib/utils";
 
 const today = () => new Date().toISOString().slice(0, 10);
@@ -19,17 +20,20 @@ export function OrderActions({
   id,
   status,
   canManage,
+  canDeletePermanently = false,
   balanceDue,
   currency,
 }: {
   id: string;
   status: string;
   canManage: boolean;
+  // Owner-only + server-verified eligibility. Never shown to Admin or Sales Rep.
+  canDeletePermanently?: boolean;
   balanceDue: number;
   currency: string;
 }) {
   const router = useRouter();
-  const [dialog, setDialog] = React.useState<null | "issue" | "payment" | "void" | "discard">(null);
+  const [dialog, setDialog] = React.useState<null | "issue" | "payment" | "void" | "discard" | "delete">(null);
   const isDraft = status === "draft";
   const isOpenInvoice = status === "sent" || status === "partial";
 
@@ -73,6 +77,14 @@ export function OrderActions({
         </Button>
       )}
 
+      {/* Owner-only permanent deletion for eligible Draft/Void orders. Server
+          re-verifies every rule; this button is a convenience gate only. */}
+      {canDeletePermanently && (
+        <Button variant="destructive" onClick={() => setDialog("delete")} title="Delete order permanently">
+          <ShieldAlert className="h-4 w-4" /> Delete permanently
+        </Button>
+      )}
+
       {dialog === "issue" && <IssueDialog id={id} onClose={() => setDialog(null)} onDone={() => router.refresh()} />}
       {dialog === "payment" && (
         <PaymentDialog id={id} balanceDue={balanceDue} currency={currency} onClose={() => setDialog(null)} onDone={() => router.refresh()} />
@@ -84,6 +96,16 @@ export function OrderActions({
           onClose={() => setDialog(null)}
           onDone={() => {
             router.push("/orders");
+            router.refresh();
+          }}
+        />
+      )}
+      {dialog === "delete" && (
+        <DeletePermanentlyDialog
+          id={id}
+          onClose={() => setDialog(null)}
+          onDone={() => {
+            router.push("/orders?deleted=1");
             router.refresh();
           }}
         />
@@ -236,6 +258,59 @@ function VoidDialog({ id, onClose, onDone }: { id: string; onClose: () => void; 
           <Button variant="outline" onClick={onClose} disabled={busy}>Cancel</Button>
           <Button variant="destructive" onClick={submit} disabled={busy || !reason.trim()}>
             {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Ban className="h-4 w-4" />} Void invoice
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// Owner-only destructive confirmation. Requires BOTH typing the exact word DELETE
+// and a non-empty reason; the confirm button stays disabled until both are met.
+// On DB refusal the exact safe business message is shown (no internals leaked).
+function DeletePermanentlyDialog({ id, onClose, onDone }: { id: string; onClose: () => void; onDone: () => void }) {
+  const { busy, setBusy, error, setError } = useSubmit();
+  const [confirm, setConfirm] = React.useState("");
+  const [reason, setReason] = React.useState("");
+  const ready = deletionConfirmed(confirm, reason);
+
+  async function submit() {
+    if (!ready) return;
+    setBusy(true);
+    setError(null);
+    const res = await deleteOrderPermanently({ invoice_id: id, reason });
+    setBusy(false);
+    if (!res.ok) return setError(res.error);
+    onClose();
+    onDone();
+  }
+
+  return (
+    <Dialog open onOpenChange={(o) => !o && onClose()}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Delete order permanently?</DialogTitle>
+          <DialogDescription>
+            This permanently removes this Draft or Void order and cannot be undone. Any issued invoice number will remain
+            retired and will never be reused. Orders with payments, paid commissions, fulfillment activity, or protected
+            financial history cannot be deleted.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-3">
+          <div className="space-y-1.5">
+            <Label>Why is this order being deleted?</Label>
+            <Textarea rows={3} value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Reason for permanent deletion…" />
+          </div>
+          <div className="space-y-1.5">
+            <Label>Type <span className="font-mono font-semibold">{DELETE_CONFIRM_WORD}</span> to confirm</Label>
+            <Input value={confirm} onChange={(e) => setConfirm(e.target.value)} placeholder={DELETE_CONFIRM_WORD} autoComplete="off" />
+          </div>
+        </div>
+        {error && <p className="text-sm text-destructive">{error}</p>}
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose} disabled={busy}>Cancel</Button>
+          <Button variant="destructive" onClick={submit} disabled={busy || !ready}>
+            {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShieldAlert className="h-4 w-4" />} Delete permanently
           </Button>
         </DialogFooter>
       </DialogContent>

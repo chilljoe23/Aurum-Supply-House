@@ -25,12 +25,14 @@ function StatusBadge({ status }: { status: string }) {
 }
 
 export function ClientsManager({
-  clients, reps, models, canAssignRep,
+  clients, reps, models, canAssignRep, showReps = true,
 }: {
   clients: ClientDetail[];
   reps: RepOption[];
   models: { id: string; name: string; code: string | null; currency: string }[];
   canAssignRep: boolean;
+  /** Show the rep column/filter. Hidden for the Owner-only launch. */
+  showReps?: boolean;
 }) {
   const router = useRouter();
   const [createOpen, setCreateOpen] = React.useState(false);
@@ -99,11 +101,11 @@ export function ClientsManager({
         </div>
       ),
     },
-    {
+    ...(showReps ? [{
       accessorKey: "assigned_rep_name",
       header: "Representative",
       cell: ({ row }) => <span className="text-muted-foreground">{row.original.assigned_rep_name ?? "— unassigned —"}</span>,
-    },
+    } as ColumnDef<ClientDetail>] : []),
     {
       accessorKey: "pricing_model_name",
       header: "Pricing model",
@@ -141,7 +143,7 @@ export function ClientsManager({
       ),
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  ], [busyId]);
+  ], [busyId, showReps]);
 
   return (
     <div className="space-y-4">
@@ -150,9 +152,11 @@ export function ClientsManager({
           <FilterSelect label="Status" value={status} onChange={setStatus} options={[
             ["all", "All statuses"], ["active", "Active"], ["prospect", "Prospect"], ["inactive", "Inactive"],
           ]} />
-          <FilterSelect label="Representative" value={rep} onChange={setRep} options={[
-            ["all", "All reps"], ["none", "Unassigned"], ...repFilterOptions,
-          ]} />
+          {showReps && (
+            <FilterSelect label="Representative" value={rep} onChange={setRep} options={[
+              ["all", "All reps"], ["none", "Unassigned"], ...repFilterOptions,
+            ]} />
+          )}
           <FilterSelect label="Pricing model" value={model} onChange={setModel} options={[
             ["all", "All models"], ["none", "No model"], ...modelFilterOptions,
           ]} />

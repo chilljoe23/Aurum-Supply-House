@@ -1702,6 +1702,314 @@ export type Database = {
           },
         ]
       }
+      order_line_fulfillment: {
+        Row: {
+          created_at: string
+          invoice_id: string
+          invoice_item_id: string
+          operational_status: Database["public"]["Enums"]["fulfillment_op_status"]
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          invoice_id: string
+          invoice_item_id: string
+          operational_status?: Database["public"]["Enums"]["fulfillment_op_status"]
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          invoice_id?: string
+          invoice_item_id?: string
+          operational_status?: Database["public"]["Enums"]["fulfillment_op_status"]
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_line_fulfillment_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_line_fulfillment_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "v_ar_aging"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_line_fulfillment_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "v_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_line_fulfillment_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "v_outstanding_invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_line_fulfillment_invoice_item_id_fkey"
+            columns: ["invoice_item_id"]
+            isOneToOne: true
+            referencedRelation: "invoice_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_line_fulfillment_invoice_item_id_fkey"
+            columns: ["invoice_item_id"]
+            isOneToOne: true
+            referencedRelation: "v_order_fulfillment_lines"
+            referencedColumns: ["invoice_item_id"]
+          },
+          {
+            foreignKeyName: "order_line_fulfillment_invoice_item_id_fkey"
+            columns: ["invoice_item_id"]
+            isOneToOne: true
+            referencedRelation: "v_order_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_line_fulfillment_invoice_item_id_fkey"
+            columns: ["invoice_item_id"]
+            isOneToOne: true
+            referencedRelation: "v_report_order_lines"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_line_fulfillment_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_line_fulfillment_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "v_profit_by_rep"
+            referencedColumns: ["rep_id"]
+          },
+        ]
+      }
+      order_shipment_items: {
+        Row: {
+          created_at: string
+          expiration_date: string | null
+          id: string
+          invoice_id: string
+          invoice_item_id: string
+          lot_number: string | null
+          manufacturing_date: string | null
+          product_name: string
+          quantity_shipped: number
+          retest_date: string | null
+          shipment_id: string
+          sku: string
+        }
+        Insert: {
+          created_at?: string
+          expiration_date?: string | null
+          id?: string
+          invoice_id: string
+          invoice_item_id: string
+          lot_number?: string | null
+          manufacturing_date?: string | null
+          product_name: string
+          quantity_shipped: number
+          retest_date?: string | null
+          shipment_id: string
+          sku: string
+        }
+        Update: {
+          created_at?: string
+          expiration_date?: string | null
+          id?: string
+          invoice_id?: string
+          invoice_item_id?: string
+          lot_number?: string | null
+          manufacturing_date?: string | null
+          product_name?: string
+          quantity_shipped?: number
+          retest_date?: string | null
+          shipment_id?: string
+          sku?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_shipment_items_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_shipment_items_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "v_ar_aging"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_shipment_items_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "v_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_shipment_items_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "v_outstanding_invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_shipment_items_invoice_item_id_fkey"
+            columns: ["invoice_item_id"]
+            isOneToOne: false
+            referencedRelation: "invoice_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_shipment_items_invoice_item_id_fkey"
+            columns: ["invoice_item_id"]
+            isOneToOne: false
+            referencedRelation: "v_order_fulfillment_lines"
+            referencedColumns: ["invoice_item_id"]
+          },
+          {
+            foreignKeyName: "order_shipment_items_invoice_item_id_fkey"
+            columns: ["invoice_item_id"]
+            isOneToOne: false
+            referencedRelation: "v_order_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_shipment_items_invoice_item_id_fkey"
+            columns: ["invoice_item_id"]
+            isOneToOne: false
+            referencedRelation: "v_report_order_lines"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_shipment_items_shipment_id_fkey"
+            columns: ["shipment_id"]
+            isOneToOne: false
+            referencedRelation: "order_shipments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_shipment_items_shipment_id_fkey"
+            columns: ["shipment_id"]
+            isOneToOne: false
+            referencedRelation: "v_order_shipments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      order_shipments: {
+        Row: {
+          carrier: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          invoice_id: string
+          notes: string | null
+          service: string | null
+          shipment_date: string
+          shipment_number: string
+          status: Database["public"]["Enums"]["shipment_status"]
+          tracking_number: string | null
+          tracking_url: string | null
+          updated_at: string
+          voided_reason: string | null
+        }
+        Insert: {
+          carrier?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          invoice_id: string
+          notes?: string | null
+          service?: string | null
+          shipment_date?: string
+          shipment_number: string
+          status?: Database["public"]["Enums"]["shipment_status"]
+          tracking_number?: string | null
+          tracking_url?: string | null
+          updated_at?: string
+          voided_reason?: string | null
+        }
+        Update: {
+          carrier?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          invoice_id?: string
+          notes?: string | null
+          service?: string | null
+          shipment_date?: string
+          shipment_number?: string
+          status?: Database["public"]["Enums"]["shipment_status"]
+          tracking_number?: string | null
+          tracking_url?: string | null
+          updated_at?: string
+          voided_reason?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_shipments_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_shipments_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "v_profit_by_rep"
+            referencedColumns: ["rep_id"]
+          },
+          {
+            foreignKeyName: "order_shipments_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_shipments_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "v_ar_aging"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_shipments_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "v_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_shipments_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "v_outstanding_invoices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       payments: {
         Row: {
           amount: number
@@ -3817,6 +4125,101 @@ export type Database = {
           },
         ]
       }
+      v_order_fulfillment_lines: {
+        Row: {
+          created_at: string | null
+          expiration_date: string | null
+          fulfillment_status: string | null
+          invoice_id: string | null
+          invoice_item_id: string | null
+          latest_shipment_date: string | null
+          latest_tracking_number: string | null
+          lot_number: string | null
+          manufacturing_date: string | null
+          operational_status:
+            | Database["public"]["Enums"]["fulfillment_op_status"]
+            | null
+          pack_size: string | null
+          product_name: string | null
+          quantity_ordered: number | null
+          quantity_remaining: number | null
+          quantity_shipped: number | null
+          retest_date: string | null
+          sku: string | null
+          strength: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoice_items_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoice_items_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "v_ar_aging"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoice_items_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "v_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoice_items_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "v_outstanding_invoices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      v_order_fulfillment_summary: {
+        Row: {
+          fulfillment_status: string | null
+          invoice_id: string | null
+          line_count: number | null
+          shipment_count: number | null
+          shippable_remaining: number | null
+          total_ordered: number | null
+          total_shipped: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoice_items_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoice_items_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "v_ar_aging"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoice_items_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "v_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoice_items_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "v_outstanding_invoices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       v_order_items: {
         Row: {
           created_at: string | null
@@ -3937,6 +4340,187 @@ export type Database = {
             columns: ["product_id"]
             isOneToOne: false
             referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      v_order_shipment_items: {
+        Row: {
+          created_at: string | null
+          expiration_date: string | null
+          id: string | null
+          invoice_id: string | null
+          invoice_item_id: string | null
+          lot_number: string | null
+          manufacturing_date: string | null
+          product_name: string | null
+          quantity_shipped: number | null
+          retest_date: string | null
+          shipment_id: string | null
+          sku: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          expiration_date?: string | null
+          id?: string | null
+          invoice_id?: string | null
+          invoice_item_id?: string | null
+          lot_number?: string | null
+          manufacturing_date?: string | null
+          product_name?: string | null
+          quantity_shipped?: number | null
+          retest_date?: string | null
+          shipment_id?: string | null
+          sku?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          expiration_date?: string | null
+          id?: string | null
+          invoice_id?: string | null
+          invoice_item_id?: string | null
+          lot_number?: string | null
+          manufacturing_date?: string | null
+          product_name?: string | null
+          quantity_shipped?: number | null
+          retest_date?: string | null
+          shipment_id?: string | null
+          sku?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_shipment_items_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_shipment_items_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "v_ar_aging"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_shipment_items_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "v_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_shipment_items_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "v_outstanding_invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_shipment_items_invoice_item_id_fkey"
+            columns: ["invoice_item_id"]
+            isOneToOne: false
+            referencedRelation: "invoice_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_shipment_items_invoice_item_id_fkey"
+            columns: ["invoice_item_id"]
+            isOneToOne: false
+            referencedRelation: "v_order_fulfillment_lines"
+            referencedColumns: ["invoice_item_id"]
+          },
+          {
+            foreignKeyName: "order_shipment_items_invoice_item_id_fkey"
+            columns: ["invoice_item_id"]
+            isOneToOne: false
+            referencedRelation: "v_order_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_shipment_items_invoice_item_id_fkey"
+            columns: ["invoice_item_id"]
+            isOneToOne: false
+            referencedRelation: "v_report_order_lines"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_shipment_items_shipment_id_fkey"
+            columns: ["shipment_id"]
+            isOneToOne: false
+            referencedRelation: "order_shipments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_shipment_items_shipment_id_fkey"
+            columns: ["shipment_id"]
+            isOneToOne: false
+            referencedRelation: "v_order_shipments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      v_order_shipments: {
+        Row: {
+          carrier: string | null
+          created_at: string | null
+          created_by: string | null
+          created_by_name: string | null
+          id: string | null
+          invoice_id: string | null
+          invoice_number: string | null
+          item_count: number | null
+          notes: string | null
+          service: string | null
+          shipment_date: string | null
+          shipment_number: string | null
+          status: Database["public"]["Enums"]["shipment_status"] | null
+          total_quantity: number | null
+          tracking_number: string | null
+          tracking_url: string | null
+          voided_reason: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_shipments_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_shipments_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "v_profit_by_rep"
+            referencedColumns: ["rep_id"]
+          },
+          {
+            foreignKeyName: "order_shipments_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_shipments_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "v_ar_aging"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_shipments_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "v_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_shipments_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "v_outstanding_invoices"
             referencedColumns: ["id"]
           },
         ]
@@ -4551,6 +5135,103 @@ export type Database = {
           },
         ]
       }
+      v_report_order_lines: {
+        Row: {
+          can_see_internal: boolean | null
+          client_id: string | null
+          company_name: string | null
+          currency: string | null
+          id: string | null
+          invoice_created_at: string | null
+          invoice_id: string | null
+          invoice_number: string | null
+          issue_date: string | null
+          line_gross_profit: number | null
+          line_revenue: number | null
+          line_true_cost: number | null
+          manufacturer_name: string | null
+          product_id: string | null
+          product_name: string | null
+          quantity: number | null
+          sales_rep_id: string | null
+          sales_rep_name: string | null
+          sku: string | null
+          status: Database["public"]["Enums"]["invoice_status"] | null
+          unit_price: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoice_items_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoice_items_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "v_ar_aging"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoice_items_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "v_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoice_items_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "v_outstanding_invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoice_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "catalog_products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoice_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoices_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoices_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "v_profit_by_client"
+            referencedColumns: ["client_id"]
+          },
+          {
+            foreignKeyName: "invoices_sales_rep_id_fkey"
+            columns: ["sales_rep_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoices_sales_rep_id_fkey"
+            columns: ["sales_rep_id"]
+            isOneToOne: false
+            referencedRelation: "v_profit_by_rep"
+            referencedColumns: ["rep_id"]
+          },
+        ]
+      }
       v_revenue_monthly: {
         Row: {
           gross_profit: number | null
@@ -4656,6 +5337,19 @@ export type Database = {
         }
         Returns: string
       }
+      create_shipment: {
+        Args: {
+          p_carrier: string
+          p_invoice: string
+          p_lines: Json
+          p_notes: string
+          p_service: string
+          p_shipment_date: string
+          p_tracking_number: string
+          p_tracking_url: string
+        }
+        Returns: Json
+      }
       delete_draft: { Args: { p_invoice: string }; Returns: undefined }
       delete_order_expense: { Args: { p_expense: string }; Returns: undefined }
       delete_po_draft: { Args: { p_po: string }; Returns: undefined }
@@ -4669,6 +5363,10 @@ export type Database = {
         Returns: string
       }
       expire_quotes: { Args: never; Returns: number }
+      hard_delete_order: {
+        Args: { p_invoice: string; p_reason: string }
+        Returns: Json
+      }
       import_catalog: {
         Args: { p_batch: string; p_mode: string; p_rows: Json }
         Returns: Json
@@ -4762,6 +5460,19 @@ export type Database = {
         }
         Returns: string
       }
+      report_recent_activity: {
+        Args: { p_limit?: number }
+        Returns: {
+          action: string
+          actor_id: string
+          actor_name: string
+          created_at: string
+          entity_id: string
+          entity_type: string
+          id: string
+          summary: string
+        }[]
+      }
       resolve_manufacturer_cost: {
         Args: {
           p_currency?: string
@@ -4852,6 +5563,13 @@ export type Database = {
         }
         Returns: string
       }
+      set_line_fulfillment_status: {
+        Args: {
+          p_item: string
+          p_status: Database["public"]["Enums"]["fulfillment_op_status"]
+        }
+        Returns: Json
+      }
       set_manufacturer_cost: {
         Args: {
           p_active: boolean
@@ -4936,6 +5654,10 @@ export type Database = {
         Args: { p_quote: string; p_reason: string }
         Returns: undefined
       }
+      void_shipment: {
+        Args: { p_reason: string; p_shipment: string }
+        Returns: Json
+      }
     }
     Enums: {
       client_status: "active" | "inactive" | "prospect"
@@ -4947,6 +5669,20 @@ export type Database = {
         | "flat"
         | "per_unit"
       cost_source: "manual" | "import" | "purchase_order"
+      fulfillment_line_status:
+        | "not_yet_shipped"
+        | "in_production"
+        | "ready_to_ship"
+        | "partially_shipped"
+        | "shipped"
+        | "backordered"
+        | "cancelled"
+      fulfillment_op_status:
+        | "not_yet_shipped"
+        | "in_production"
+        | "ready_to_ship"
+        | "backordered"
+        | "cancelled"
       import_status: "pending" | "previewed" | "committed" | "failed"
       invoice_status: "draft" | "sent" | "paid" | "partial" | "void"
       manufacturer_payment_type:
@@ -4961,6 +5697,12 @@ export type Database = {
         | "testing"
         | "referral_expense"
         | "other"
+      order_fulfillment_status:
+        | "not_started"
+        | "in_progress"
+        | "partially_shipped"
+        | "fully_shipped"
+        | "cancelled"
       order_stage:
         | "quote"
         | "approved_order"
@@ -5007,6 +5749,7 @@ export type Database = {
         | "converted"
         | "void"
       sheet_status: "active" | "archived"
+      shipment_status: "finalized" | "void"
       user_role: "owner" | "admin" | "sales_rep"
     }
     CompositeTypes: {
@@ -5145,6 +5888,22 @@ export const Constants = {
         "per_unit",
       ],
       cost_source: ["manual", "import", "purchase_order"],
+      fulfillment_line_status: [
+        "not_yet_shipped",
+        "in_production",
+        "ready_to_ship",
+        "partially_shipped",
+        "shipped",
+        "backordered",
+        "cancelled",
+      ],
+      fulfillment_op_status: [
+        "not_yet_shipped",
+        "in_production",
+        "ready_to_ship",
+        "backordered",
+        "cancelled",
+      ],
       import_status: ["pending", "previewed", "committed", "failed"],
       invoice_status: ["draft", "sent", "paid", "partial", "void"],
       manufacturer_payment_type: [
@@ -5160,6 +5919,13 @@ export const Constants = {
         "testing",
         "referral_expense",
         "other",
+      ],
+      order_fulfillment_status: [
+        "not_started",
+        "in_progress",
+        "partially_shipped",
+        "fully_shipped",
+        "cancelled",
       ],
       order_stage: [
         "quote",
@@ -5212,6 +5978,7 @@ export const Constants = {
         "void",
       ],
       sheet_status: ["active", "archived"],
+      shipment_status: ["finalized", "void"],
       user_role: ["owner", "admin", "sales_rep"],
     },
   },

@@ -9,6 +9,7 @@ import { DataTable } from "@/components/patterns/data-table";
 import { EmptyState } from "@/components/patterns/empty-state";
 import { QuoteStatusBadge } from "@/components/quotes/quote-status-badge";
 import { formatCurrency } from "@/lib/utils";
+import { SALES_REPS_ENABLED } from "@/lib/launch";
 import type { QuoteListRow } from "@/lib/quotes/queries";
 
 const STATUS_OPTIONS: [string, string][] = [
@@ -77,11 +78,11 @@ export function QuotesManager({ quotes }: { quotes: QuoteListRow[] }) {
         header: "Client",
         cell: ({ row }) => row.original.company_name ?? <span className="text-muted-foreground">—</span>,
       },
-      {
+      ...(SALES_REPS_ENABLED ? [{
         accessorKey: "sales_rep_name",
         header: "Representative",
         cell: ({ row }) => <span className="text-muted-foreground">{row.original.sales_rep_name ?? "—"}</span>,
-      },
+      } as ColumnDef<QuoteListRow>] : []),
       {
         id: "quote_date",
         accessorFn: (r) => r.quote_date ?? r.created_at,
@@ -173,7 +174,9 @@ export function QuotesManager({ quotes }: { quotes: QuoteListRow[] }) {
       <div className="flex flex-wrap items-center gap-2">
         <FilterSelect label="Status" value={status} onChange={setStatus} options={STATUS_OPTIONS} />
         <FilterSelect label="Client" value={client} onChange={setClient} options={[["all", "All clients"], ...clientOptions]} />
-        <FilterSelect label="Representative" value={rep} onChange={setRep} options={[["all", "All reps"], ...repOptions]} />
+        {SALES_REPS_ENABLED && (
+          <FilterSelect label="Representative" value={rep} onChange={setRep} options={[["all", "All reps"], ...repOptions]} />
+        )}
         <FilterSelect label="Pricing model" value={model} onChange={setModel} options={[["all", "All models"], ...modelOptions]} />
         <FilterSelect
           label="Expiration"

@@ -12,6 +12,10 @@ import {
   voidSchema,
   expenseSchema,
   lotSchema,
+  deleteOrderSchema,
+  lineStatusSchema,
+  shipmentSchema,
+  voidShipmentSchema,
 } from "@/lib/orders/schemas";
 
 export type Result<T = unknown> =
@@ -21,6 +25,14 @@ export type Result<T = unknown> =
 async function requireStaff() {
   const u = await getCurrentUser();
   if (!u) throw new Error("Not authorized");
+  return u;
+}
+
+// Owner/Admin gate for fulfillment writes (the DB RPCs re-verify app.is_admin();
+// this is the UI-layer boundary that keeps the actions off reps' surface).
+async function requireAdmin() {
+  const u = await getCurrentUser();
+  if (!u || (u.role !== "owner" && u.role !== "admin")) throw new Error("Not authorized");
   return u;
 }
 
@@ -158,6 +170,30 @@ export async function voidInvoice(raw: unknown): Promise<Result> {
   return { ok: true };
 }
 
+// ---- Owner-only permanent deletion ------------------------------------------
+// Distinct from Void (which retains the record). The Owner-only, eligibility-
+// gated, atomic teardown lives entirely in the SECURITY DEFINER RPC
+// public.hard_delete_order; this action only forwards the request and surfaces
+// the DB's safe business-reason message verbatim on refusal. The RPC re-verifies
+// Owner + Draft/Void + no payments/paid commissions server-side, so the UI's
+// eligibility gating is convenience only, never the security boundary.
+export async function deleteOrderPermanently(raw: unknown): Promise<Result<{ former_order_number?: string }>> {
+  await requireStaff();
+  const parsed = deleteOrderSchema.safeParse(raw);
+  if (!parsed.success) return { ok: false, error: "Validation failed", fieldErrors: parsed.error.flatten().fieldErrors };
+  // Untyped client: hard_delete_order is not in the committed generated types
+  // until gen:types re-runs against the migrated DB (same pattern as lot assign).
+  const supabase = await createUntypedClient();
+  const { data, error } = await supabase.rpc("hard_delete_order", {
+    p_invoice: parsed.data.invoice_id,
+    p_reason: parsed.data.reason,
+  });
+  if (error) return { ok: false, error: friendly(error) };
+  revalidatePath("/orders");
+  const former = (data as { former_order_number?: string } | null)?.former_order_number;
+  return { ok: true, data: { former_order_number: former } };
+}
+
 // ---- Internal expenses ------------------------------------------------------
 export async function addExpense(raw: unknown): Promise<Result> {
   await requireStaff();
@@ -204,6 +240,71 @@ export async function assignInvoiceLot(raw: unknown, invoiceId: string): Promise
     p_coa_path: null,
   });
   if (error) return { ok: false, error: friendly(error) };
+  revalidatePath(`/orders/${invoiceId}`);
+  return { ok: true };
+}
+
+// ---- Fulfillment: set a line's operational status ---------------------------
+// Owner/Admin only. "partially_shipped" / "shipped" are derived and rejected by
+// the schema. The DB RPC additionally refuses cancelling a line that has shipped.
+export async function setLineFulfillmentStatus(raw: unknown, invoiceId: string): Promise<Result> {
+  await requireAdmin();
+  const parsed = lineStatusSchema.safeParse(raw);
+  if (!parsed.success) return { ok: false, error: "Validation failed", fieldErrors: parsed.error.flatten().fieldErrors };
+  const supabase = await createUntypedClient();
+  const { error } = await supabase.rpc("set_line_fulfillment_status", {
+    p_item: parsed.data.item_id,
+    p_status: parsed.data.status,
+  });
+  if (error) return { ok: false, error: friendly(error) };
+  revalidatePath("/orders");
+  revalidatePath(`/orders/${invoiceId}`);
+  return { ok: true };
+}
+
+// ---- Fulfillment: create a shipment (atomic; over-ship rejected by the RPC) --
+export async function createShipment(raw: unknown): Promise<Result<{ shipment_number: string }>> {
+  await requireAdmin();
+  const parsed = shipmentSchema.safeParse(raw);
+  if (!parsed.success) return { ok: false, error: "Validation failed", fieldErrors: parsed.error.flatten().fieldErrors };
+  const s = parsed.data;
+  const supabase = await createUntypedClient();
+  const { data, error } = await supabase.rpc("create_shipment", {
+    p_invoice: s.invoice_id,
+    p_shipment_date: s.shipment_date ?? null,
+    p_carrier: s.carrier ?? null,
+    p_service: s.service ?? null,
+    p_tracking_number: s.tracking_number ?? null,
+    p_tracking_url: s.tracking_url ?? null,
+    p_notes: s.notes ?? null,
+    p_lines: s.lines.map((l) => ({
+      invoice_item_id: l.invoice_item_id,
+      quantity: l.quantity,
+      lot_number: l.lot_number ?? null,
+      manufacturing_date: l.manufacturing_date ?? null,
+      expiration_date: l.expiration_date ?? null,
+      retest_date: l.retest_date ?? null,
+    })),
+  });
+  if (error) return { ok: false, error: friendly(error) };
+  revalidatePath("/orders");
+  revalidatePath(`/orders/${s.invoice_id}`);
+  const number = (data as { shipment_number?: string } | null)?.shipment_number ?? "";
+  return { ok: true, data: { shipment_number: number } };
+}
+
+// ---- Fulfillment: void a shipment (audited correction; append-only preserved)-
+export async function voidShipment(raw: unknown, invoiceId: string): Promise<Result> {
+  await requireAdmin();
+  const parsed = voidShipmentSchema.safeParse(raw);
+  if (!parsed.success) return { ok: false, error: "Validation failed", fieldErrors: parsed.error.flatten().fieldErrors };
+  const supabase = await createUntypedClient();
+  const { error } = await supabase.rpc("void_shipment", {
+    p_shipment: parsed.data.shipment_id,
+    p_reason: parsed.data.reason,
+  });
+  if (error) return { ok: false, error: friendly(error) };
+  revalidatePath("/orders");
   revalidatePath(`/orders/${invoiceId}`);
   return { ok: true };
 }

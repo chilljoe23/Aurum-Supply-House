@@ -8,7 +8,9 @@ import { Button } from "@/components/ui/button";
 import { DataTable } from "@/components/patterns/data-table";
 import { EmptyState } from "@/components/patterns/empty-state";
 import { OrderStatusBadge } from "@/components/orders/status-badge";
+import { OrderFulfillmentBadge } from "@/components/orders/fulfillment-status-badge";
 import { formatCurrency } from "@/lib/utils";
+import { SALES_REPS_ENABLED } from "@/lib/launch";
 import type { OrderListRow } from "@/lib/orders/queries";
 
 const STATUS_OPTIONS: [string, string][] = [
@@ -20,8 +22,18 @@ const STATUS_OPTIONS: [string, string][] = [
   ["void", "Void"],
 ];
 
+const FULFILLMENT_OPTIONS: [string, string][] = [
+  ["all", "All fulfillment"],
+  ["not_started", "Not started"],
+  ["in_progress", "In progress"],
+  ["partially_shipped", "Partially shipped"],
+  ["fully_shipped", "Fully shipped"],
+  ["cancelled", "Cancelled"],
+];
+
 export function OrdersManager({ orders, canSeeInternal }: { orders: OrderListRow[]; canSeeInternal: boolean }) {
   const [status, setStatus] = React.useState("all");
+  const [fulfillment, setFulfillment] = React.useState("all");
   const [client, setClient] = React.useState("all");
   const [rep, setRep] = React.useState("all");
   const [model, setModel] = React.useState("all");
@@ -37,6 +49,7 @@ export function OrdersManager({ orders, canSeeInternal }: { orders: OrderListRow
     () =>
       orders.filter((o) => {
         if (status !== "all" && o.status !== status) return false;
+        if (fulfillment !== "all" && (o.fulfillment_status ?? "not_started") !== fulfillment) return false;
         if (client !== "all" && o.client_id !== client) return false;
         if (rep !== "all" && o.sales_rep_id !== rep) return false;
         if (model !== "all" && o.pricing_sheet_id !== model) return false;
@@ -47,7 +60,7 @@ export function OrdersManager({ orders, canSeeInternal }: { orders: OrderListRow
         if (to && d > to) return false;
         return true;
       }),
-    [orders, status, client, rep, model, paid, from, to],
+    [orders, status, fulfillment, client, rep, model, paid, from, to],
   );
 
   const columns = React.useMemo<ColumnDef<OrderListRow>[]>(() => {
@@ -76,12 +89,23 @@ export function OrdersManager({ orders, canSeeInternal }: { orders: OrderListRow
           </span>
         ),
       },
-      {
+      ...(SALES_REPS_ENABLED ? [{
         accessorKey: "sales_rep_name",
         header: "Representative",
         cell: ({ row }) => <span className="text-muted-foreground">{row.original.sales_rep_name ?? "—"}</span>,
+      } as ColumnDef<OrderListRow>] : []),
+      { accessorKey: "status", header: "Payment", cell: ({ row }) => <OrderStatusBadge status={row.original.status} /> },
+      {
+        id: "fulfillment_status",
+        accessorFn: (r) => r.fulfillment_status ?? "not_started",
+        header: "Fulfillment",
+        cell: ({ row }) =>
+          row.original.fulfillment_status ? (
+            <OrderFulfillmentBadge status={row.original.fulfillment_status} compact />
+          ) : (
+            <span className="text-muted-foreground">—</span>
+          ),
       },
-      { accessorKey: "status", header: "Status", cell: ({ row }) => <OrderStatusBadge status={row.original.status} /> },
       {
         accessorKey: "total",
         header: "Total",
@@ -157,9 +181,12 @@ export function OrdersManager({ orders, canSeeInternal }: { orders: OrderListRow
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center gap-2">
-        <FilterSelect label="Status" value={status} onChange={setStatus} options={STATUS_OPTIONS} />
+        <FilterSelect label="Payment" value={status} onChange={setStatus} options={STATUS_OPTIONS} />
+        <FilterSelect label="Fulfillment" value={fulfillment} onChange={setFulfillment} options={FULFILLMENT_OPTIONS} />
         <FilterSelect label="Client" value={client} onChange={setClient} options={[["all", "All clients"], ...clientOptions]} />
-        <FilterSelect label="Representative" value={rep} onChange={setRep} options={[["all", "All reps"], ...repOptions]} />
+        {SALES_REPS_ENABLED && (
+          <FilterSelect label="Representative" value={rep} onChange={setRep} options={[["all", "All reps"], ...repOptions]} />
+        )}
         <FilterSelect label="Pricing model" value={model} onChange={setModel} options={[["all", "All models"], ...modelOptions]} />
         <FilterSelect
           label="Payment"

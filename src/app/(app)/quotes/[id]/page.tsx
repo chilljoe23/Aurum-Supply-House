@@ -8,6 +8,7 @@ import { KpiCard } from "@/components/patterns/kpi-card";
 import { QuoteStatusBadge } from "@/components/quotes/quote-status-badge";
 import { QuoteActions } from "@/components/quotes/quote-actions";
 import { getCurrentUser } from "@/lib/auth";
+import { SALES_REPS_ENABLED } from "@/lib/launch";
 import { getQuoteDetail } from "@/lib/quotes/queries";
 import { addressLines, paymentTermsLabel } from "@/lib/quotes/quote-view-model";
 import { formatCurrency } from "@/lib/utils";
@@ -162,7 +163,7 @@ export default async function QuoteDetailPage({ params }: { params: Promise<{ id
             </CardHeader>
             <CardContent className="space-y-2.5 text-sm">
               <InfoRow label="Client" value={h.company_name} />
-              <InfoRow label="Representative" value={h.sales_rep_name} />
+              {SALES_REPS_ENABLED && <InfoRow label="Representative" value={h.sales_rep_name} />}
               <InfoRow label="Pricing model" value={h.pricing_sheet_name ?? "— default —"} />
               <InfoRow label="Payment terms" value={paymentTermsLabel(h.payment_terms)} />
               <InfoRow label="Customer reference" value={h.customer_reference} />
