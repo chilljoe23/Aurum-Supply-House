@@ -151,7 +151,10 @@ async function resolveChromeRuntime(): Promise<ChromeRuntime | null> {
       args: chromium.args,
       headless: "shell",
     };
-  } catch {
+  } catch (error) {
+    // Keep the route's user-friendly 503 fallback, but preserve the actual
+    // initialization failure in platform logs for production diagnosis.
+    console.error("Failed to initialize packaged Chromium.", error);
     return null;
   }
 }
